@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pluto ROS2 Documentation</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-dark: #000000;
+      --sidebar-bg: #000000;
+      --sidebar-hover: #1a1a1a;
+      --sidebar-active: #ffffff;
+      --sidebar-active-bg: #333333;
+      --accent: #ffffff;
+      --accent2: #cccccc;
+      --text-main: #ffffff;
+      --text-muted: #888888;
+      --content-bg: #ffffff;
+      --content-text: #000000;
+      --content-heading: #000000;
+      --border: #333333;
+      --code-bg: #0a0a0a;
+      --code-text: #f0f0f0;
+      --link: #000000;
+      --top-bar: #000000;
+      --header-blue: #02163a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-bar {
+      background: var(--top-bar);
+      height: 54px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 14px;
+      border-bottom: 1px solid #2a2a2a;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .top-bar .title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.3px;
+    }
+    .top-bar .badge-wsl {
+      background: #1a3a1a;
+      color: #4caf50;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      margin-left: auto;
+    }
+
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 270px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      padding: 18px 16px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #0a0a0a;
+    }
+    .sidebar-logo img {
+      width: 100%;
+      height: auto;
+      max-height: 70px;
+      object-fit: contain;
+      display: block;
+      border-radius: 6px;
+    }
+
+    .sidebar-search {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-search input {
+      width: 100%;
+      background: #fefdfd;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 7px 12px;
+      color: #000000;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      outline: none;
+    }
+    .sidebar-search input::placeholder { color: #555; }
+    .sidebar-search input:focus { border-color: #888; }
+
+    .nav-section { padding: 8px 0; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #aaaaaa;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      border-left: 3px solid transparent;
+      user-select: none;
+    }
+    .nav-item:hover {
+      background: var(--sidebar-hover);
+      color: #fff;
+      transform: translateX(4px);
+    }
+    .nav-item.active {
+      background: var(--sidebar-active-bg);
+      color: #ffffff;
+      border-left-color: #ffffff;
+      font-weight: 700;
+    }
+    .nav-item .nav-icon {
+      font-size: 13px;
+      color: #888888;
+      width: 16px;
+      text-align: center;
+    }
+    .nav-item.active .nav-icon { color: #ffffff; }
+    .nav-item .proj-num {
+      font-size: 10px;
+      font-weight: 800;
+      background: #222;
+      color: #888;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: auto;
+      flex-shrink: 0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .nav-item.active .proj-num { background: #444; color: #fff; }
+
+    .nav-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 10px 18px 4px;
+    }
+
+    .content-area {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @keyframes pageIn {
+      0% { opacity: 0; transform: translateY(16px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .page {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      background: var(--content-bg);
+      color: var(--content-text);
+      padding: 40px 52px 60px;
+      font-family: 'Syne', sans-serif;
+    }
+    .page.active {
+      display: block;
+      animation: pageIn 0.4s ease forwards;
+    }
+
+    .page h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--content-heading);
+      margin-bottom: 10px;
+    }
+    .page h2 {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--content-heading);
+      margin: 28px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #d0d0d0;
+    }
+    .page h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #222222;
+      margin: 18px 0 8px;
+    }
+    .page p {
+      font-size: 14px;
+      line-height: 1.75;
+      color: #3c3c3c;
+      margin-bottom: 12px;
+    }
+    .page ul, .page ol {
+      padding-left: 22px;
+      margin-bottom: 14px;
+    }
+    .page li {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #3c3c3c;
+      margin-bottom: 4px;
+    }
+    .page a { color: #111111; text-decoration: underline; }
+    .page a:hover { color: #000; }
+
+    .page-header-bar {
+      background: var(--header-blue);
+      color: #ffffff;
+      padding: 24px 52px;
+      border-bottom: 4px solid #000000;
+      flex-shrink: 0;
+      margin: -40px -52px 32px;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .page-header-bar h1 {
+      color: #ffffff !important;
+      font-size: 26px !important;
+      margin: 0 !important;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .page-header-bar .sub {
+      color: #a0b4cc !important;
+      margin: 6px 0 0 !important;
+      font-size: 13px !important;
+    }
+    .page-header-bar .proj-tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .page ul li { list-style-type: none; position: relative; }
+    .page ul li::before {
+      content: "";
+      color: #cc2200;
+      position: absolute;
+      left: -20px;
+      font-size: 11px;
+      top: 4px;
+    }
+    .page ol li::marker { color: #0044cc; font-weight: bold; }
+
+    code, .code-inline {
+      font-family: 'JetBrains Mono', monospace;
+      background: #e8e8e8;
+      color: #111111;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 12.5px;
+    }
+
+    .step-block {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin: 14px 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .step-block:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      background: #111111;
+      color: #fff;
+      font-weight: 800;
+      font-size: 12px;
+      border-radius: 50%;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--content-heading);
+      margin-bottom: 10px;
+    }
+
+    .info-box {
+      background: #eef4ff;
+      border-left: 4px solid #2255cc;
+      border-radius: 6px;
+      padding: 11px 16px;
+      font-size: 13.5px;
+      color: #1a3a88;
+      margin: 12px 0;
+    }
+    .warn-box {
+      background: #fff8e6;
+      border-left: 4px solid #cc8800;
+      border-radius: 6px;
+      padding: 11px 16px;
+      font-size: 13.5px;
+      color: #7a5200;
+      margin: 12px 0;
+    }
+    .success-box {
+      background: #efffef;
+      border-left: 4px solid #228822;
+      border-radius: 6px;
+      padding: 11px 16px;
+      font-size: 13.5px;
+      color: #1a5c1a;
+      margin: 12px 0;
+    }
+    .error-box {
+      background: #fff0f0;
+      border-left: 4px solid #cc2200;
+      border-radius: 6px;
+      padding: 11px 16px;
+      font-size: 13.5px;
+      color: #8a1a00;
+      margin: 12px 0;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 18px 0;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 18px 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .card:hover {
+      box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+      transform: translateY(-5px);
+    }
+    .card-icon { font-size: 24px; margin-bottom: 8px; }
+    .card h3 { font-size: 14px; font-weight: 700; color: #111; margin-bottom: 6px; }
+    .card p { font-size: 12.5px; color: #666; line-height: 1.6; margin: 0; }
+
+    .terminal {
+      background: #0a0a0a;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 12px 0 18px;
+      border: 1px solid #222;
+    }
+    .terminal-bar {
+      background: #151515;
+      padding: 7px 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-bottom: 1px solid #222;
+    }
+    .t-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .t-red { background: #444; }
+    .t-yellow { background: #666; }
+    .t-green { background: #888; }
+    .terminal-label {
+      font-size: 11px;
+      color: #555;
+      font-family: 'JetBrains Mono', monospace;
+      margin-left: 6px;
+    }
+    .copy-btn {
+      background: #222;
+      color: #888;
+      border: 1px solid #333;
+      padding: 2px 8px;
+      font-size: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { background: #333; color: #fff; }
+    .copy-btn.copied { background: #0044cc; color: #fff; border-color: #0044cc; }
+
+    .terminal-body {
+      padding: 14px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.9;
+      color: #cccccc;
+    }
+    .terminal-body .prompt { color: #555; }
+    .terminal-body .cmd-text { color: #ffffff; }
+    .terminal-body .out { color: #555; font-style: italic; }
+    .terminal-body .ok { color: #4caf50; }
+    .terminal-body .cmt { color: #444; }
+
+    .page::-webkit-scrollbar { width: 6px; }
+    .page::-webkit-scrollbar-track { background: #e8e8e8; }
+    .page::-webkit-scrollbar-thumb { background: #aaaaaa; border-radius: 3px; }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: #000; }
+    .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+    .proj-flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .proj-chip {
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .proj-chip .chip-num {
+      background: #111;
+      color: #fff;
+      border-radius: 10px;
+      padding: 0px 5px;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 14px 0;
+    }
+
+    @media (max-width: 900px) {
+      body { height: auto; overflow: auto; }
+      .layout { flex-direction: column; }
+      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .nav-section { display: flex; flex-wrap: wrap; padding: 10px; gap: 5px; }
+      .nav-label, .nav-divider, .sidebar-search { display: none; }
+      .nav-item { padding: 7px 10px; border-radius: 6px; border-left: none; font-size: 11px; background: #111; }
+      .nav-item.active { background: var(--sidebar-active-bg); }
+      .nav-item:hover { transform: none; }
+      .page { padding: 20px 18px 40px; }
+      .page-header-bar { padding: 18px; margin: -20px -18px 28px; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="title">Pluto ROS2 Documentation</span>
+  <span class="badge-wsl">WSL2 · Ubuntu 24 · ROS2 Jazzy</span>
+</div>
+
+<div class="layout">
+
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img src="logo.jpg" alt="Drona Aviation / Pluto Logo" onerror="this.style.display='none'"/>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" placeholder="Search docs…" oninput="filterNav(this.value)"/>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" data-page="about" onclick="showPage('about',this)">
+        <span class="nav-icon"></span> About &amp; Architecture
+      </div>
+
+      <div class="nav-divider"></div>
+      <div class="nav-label">Projects</div>
+
+      <div class="nav-item" data-page="p0" onclick="showPage('p0',this)">
+        <span class="nav-icon"></span> ROS2 Installation &amp; WSL Setup
+        <span class="proj-num">P0</span>
+      </div>
+      <div class="nav-item" data-page="p1" onclick="showPage('p1',this)">
+        <span class="nav-icon"></span> Drone Connection &amp; Telemetry
+        <span class="proj-num">P1</span>
+      </div>
+      <div class="nav-item" data-page="p2" onclick="showPage('p2',this)">
+        <span class="nav-icon"></span> Pluto RViz Visualisation
+        <span class="proj-num">P2</span>
+      </div>
+      <div class="nav-item" data-page="p3" onclick="showPage('p3',this)">
+        <span class="nav-icon"></span> Pluto Gazebo Simulation
+        <span class="proj-num">P3</span>
+      </div>
+      <div class="nav-item" data-page="p4" onclick="showPage('p4',this)">
+        <span class="nav-icon"></span> Basic Flight Control
+        <span class="proj-num">P4</span>
+      </div>
+      <div class="nav-item" data-page="p5" onclick="showPage('p5',this)">
+        <span class="nav-icon"></span> Camera Integration
+        <span class="proj-num">P5</span>
+      </div>
+      <div class="nav-item" data-page="p6" onclick="showPage('p6',this)">
+        <span class="nav-icon"></span> Hand Gesture Detection
+        <span class="proj-num">P6</span>
+      </div>
+      <div class="nav-item" data-page="p7" onclick="showPage('p7',this)">
+        <span class="nav-icon"></span> ArUco Detection
+        <span class="proj-num">P7</span>
+      </div>
+      <div class="nav-item" data-page="p8" onclick="showPage('p8',this)">
+        <span class="nav-icon"></span> ArUco Tracking
+        <span class="proj-num">P8</span>
+      </div>
+      <div class="nav-item" data-page="p9" onclick="showPage('p9',this)">
+        <span class="nav-icon"></span> ArUco Hovering
+        <span class="proj-num">P9</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-area">
+
+    <!-- ABOUT -->
+    <div class="page active" id="page-about">
+      <div class="page-header-bar">
+        <h1>About &amp; Architecture</h1>
+        <p class="sub">Drona Aviation · Pluto ROS2 · WSL2 Guide — 10 Projects from Zero to Autonomous Flight</p>
+      </div>
+
+      <h2>What is This?</h2>
+      <p>This documentation guides you through <strong>10 progressive projects</strong> (P0–P9) to go from a bare WSL2 install all the way to autonomous ArUco-marker hovering with the <strong>PlutoDrone</strong> nano-drone using ROS2 Jazzy on Windows 11 WSL2.</p>
+
+      <div class="proj-flow">
+        <div class="proj-chip"><span class="chip-num">P0</span> ROS2 Setup</div>
+        <div class="proj-chip"><span class="chip-num">P1</span> Telemetry</div>
+        <div class="proj-chip"><span class="chip-num">P2</span> RViz</div>
+        <div class="proj-chip"><span class="chip-num">P3</span> Gazebo</div>
+        <div class="proj-chip"><span class="chip-num">P4</span> Flight</div>
+        <div class="proj-chip"><span class="chip-num">P5</span> Camera</div>
+        <div class="proj-chip"><span class="chip-num">P6</span> Gestures</div>
+        <div class="proj-chip"><span class="chip-num">P7</span> ArUco</div>
+        <div class="proj-chip"><span class="chip-num">P8</span> Tracking</div>
+        <div class="proj-chip"><span class="chip-num">P9</span> Hovering</div>
+      </div>
+
+      <h2>System Architecture</h2>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon"></div>
+          <h3>Windows 11 + WSL2</h3>
+          <p>Ubuntu 24 running inside WSL2. ROS2 Jazzy installed natively. WiFi bridged to drone AP.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon"></div>
+          <h3>PlutoDrone</h3>
+          <p>STM32 flight controller. MSP protocol over WiFi at 192.168.0.1:9060. Optional camera module.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon"></div>
+          <h3>pluto_ros2_package</h3>
+          <p>GitHub repo by techsavvyomi. Contains plutodrone, plutoserver, pluto_dashboard, pluto_vision, pluto_camera_sense.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon"></div>
+          <h3>Dashboard</h3>
+          <p>Flask + rclpy web UI at localhost:5050. Arm/takeoff/land, telemetry, camera preview, process manager.</p>
+        </div>
+      </div>
+
+      <h2>GitHub Repository</h2>
+      <div class="step-block">
+        <div class="step-header">Main Repo (dashboard-integration branch)</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            <span class="cmt"># Main package</span><br>
+            https://github.com/techsavvyomi/pluto_ros2_package.git<br>
+            <span class="cmt"># Camera fix branch</span><br>
+            https://github.com/techsavvyomi/pluto_cam_ros2.git
+          </div>
+        </div>
+      </div>
+
+      <h2>Topic Reference</h2>
+      <div class="two-col">
+        <div>
+          <h3>Published by plutonode</h3>
+          <ul>
+            <li><code>/pluto/imu</code> — IMU data</li>
+            <li><code>/pluto/battery</code> — Battery voltage</li>
+            <li><code>/pluto/altitude</code> — Barometer altitude</li>
+            <li><code>/plutocamera/image_raw</code> — Camera feed</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Subscribed by plutonode</h3>
+          <ul>
+            <li><code>/drone_command</code> — PlutoMsg flight cmds</li>
+            <li><code>/pluto/calibrate_acc</code> — Accel calibration</li>
+            <li><code>/pluto/calibrate_mag</code> — Mag calibration</li>
+            <li><code>/pluto/set_pid</code> — PID tuning</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- P0 -->
+    <div class="page" id="page-p0">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 0</div>
+        <h1>ROS2 Installation &amp; WSL2 Environment Setup</h1>
+        <p class="sub">Get ROS2 Jazzy running inside WSL2 on Windows 11 and clone the Pluto package</p>
+      </div>
+
+      <div class="warn-box"> All commands run inside <strong>WSL2 Ubuntu 24</strong> terminal unless specified otherwise.</div>
+
+      <h2>Step 1 — Enable WSL2 &amp; Install Ubuntu 24</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Enable WSL2 in PowerShell (Run as Admin)</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">PowerShell (Admin)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            wsl --install -d Ubuntu-24.04<br>
+            <span class="out"># Restart Windows when prompted</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Step 2 — Install ROS2 Jazzy inside WSL2</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Add ROS2 apt repository</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            sudo apt update && sudo apt install -y software-properties-common curl<br>
+            sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg<br>
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Install ROS2 Jazzy Desktop</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            sudo apt update<br>
+            sudo apt install -y ros-jazzy-desktop python3-colcon-common-extensions python3-pip<br>
+            echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc<br>
+            source ~/.bashrc
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">4</span> Verify Installation</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            ros2 --version<br>
+            <span class="ok">ros2cli 0.18.x (jazzy)</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Step 3 — Clone &amp; Build Pluto Package</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">5</span> Clone the repository</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            mkdir -p ~/pluto_ws && cd ~/pluto_ws<br>
+            git clone -b dashboard-integration https://github.com/techsavvyomi/pluto_ros2_package.git<br>
+            cd pluto_ros2_package<br>
+            <span class="cmt"># Also clone camera fix</span><br>
+            git clone -b fix-1080p-framebuffer https://github.com/techsavvyomi/pluto_cam_ros2.git pluto_ros2_package/pluto_cam_ros2
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">6</span> Install dependencies &amp; build</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            cd ~/pluto_ws/pluto_ros2_package<br>
+            pip install av numpy --break-system-packages<br>
+            sudo apt install -y ffmpeg python3-colcon-common-extensions<br>
+            source /opt/ros/jazzy/setup.bash<br>
+            colcon build<br>
+            echo "source ~/pluto_ws/pluto_ros2_package/install/setup.bash" >> ~/.bashrc<br>
+            source ~/.bashrc
+          </div>
+        </div>
+      </div>
+
+      <div class="success-box"> ROS2 Jazzy + Pluto package is now installed. Proceed to Project 1.</div>
+    </div>
+
+    <!-- P1 -->
+    <div class="page" id="page-p1">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 1</div>
+        <h1>Drone Connection &amp; Telemetry</h1>
+        <p class="sub">Connect PlutoDrone over WiFi and read live IMU, battery, and altitude topics</p>
+      </div>
+
+      <div class="info-box"> Connect your PC WiFi to the <strong>PlutoDrone WiFi hotspot</strong> before running any commands.</div>
+
+      <h2>Verify Network</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Ping the drone</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            ping 192.168.0.1 -c 4<br>
+            <span class="ok">64 bytes from 192.168.0.1: icmp_seq=1 ttl=64 time=2.1 ms</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Start Pluto Node</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Terminal 1 — Launch plutonode</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 1</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run plutodrone plutonode<br>
+            <span class="ok">[plutonode] trying 192.168.0.1:9060 …</span><br>
+            <span class="ok">[plutonode] connected to 192.168.0.1:9060</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Read Telemetry Topics</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Terminal 2 — View live telemetry</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 2</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br><br>
+            <span class="cmt"># List all pluto topics</span><br>
+            ros2 topic list | grep pluto<br><br>
+            <span class="cmt"># Read IMU data</span><br>
+            ros2 topic echo /pluto/imu<br><br>
+            <span class="cmt"># Read battery</span><br>
+            ros2 topic echo /pluto/battery<br><br>
+            <span class="cmt"># Read altitude</span><br>
+            ros2 topic echo /pluto/altitude
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">4</span> Check topic frequency</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 2</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            ros2 topic hz /pluto/imu<br>
+            <span class="ok">average rate: 100.000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="success-box"> If you see IMU data streaming, drone connection is working. Proceed to P2.</div>
+    </div>
+
+    <!-- P2 -->
+    <div class="page" id="page-p2">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 2</div>
+        <h1>Pluto RViz Visualisation</h1>
+        <p class="sub">Visualise drone orientation, TF frames, and telemetry in RViz2</p>
+      </div>
+
+      <div class="warn-box"> RViz requires a display. Use WSLg (Windows 11 21H2+) or set DISPLAY manually.</div>
+
+      <h2>Setup WSLg Display</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Verify WSLg is working</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            echo $DISPLAY<br>
+            <span class="ok">:0</span><br><br>
+            <span class="cmt"># If empty, add to ~/.bashrc:</span><br>
+            export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0<br>
+            export LIBGL_ALWAYS_INDIRECT=1
+          </div>
+        </div>
+      </div>
+
+      <h2>Launch Dashboard + RViz</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Terminal 1 — Start plutonode</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 1</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run plutodrone plutonode
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Terminal 2 — Launch TF broadcaster + RViz</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 2</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run pluto_dashboard pluto_tf_broadcaster<br><br>
+            <span class="cmt"># In Terminal 3 — open RViz</span><br>
+            rviz2
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">4</span> Configure RViz panels</div>
+        <p>In RViz2, add these displays:</p>
+        <ul>
+          <li>Add → <strong>TF</strong> — to see drone frame</li>
+          <li>Add → <strong>Imu</strong> → topic: <code>/pluto/imu</code></li>
+          <li>Set <strong>Fixed Frame</strong> to <code>world</code></li>
+        </ul>
+        <div class="info-box">The drone's roll/pitch/yaw will be shown in real-time as the TF frame rotates.</div>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div class="page" id="page-p3">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 3</div>
+        <h1>Pluto Gazebo Simulation</h1>
+        <p class="sub">Simulate PlutoDrone flight in Gazebo before deploying on real hardware</p>
+      </div>
+
+      <div class="warn-box"> Gazebo requires WSLg or an X server (VcXsrv / Xming) on Windows.</div>
+
+      <h2>Install Gazebo</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Install Gazebo Harmonic (for Jazzy)</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            sudo apt install -y ros-jazzy-ros-gz<br>
+            sudo apt install -y ros-jazzy-gz-ros2-control
+          </div>
+        </div>
+      </div>
+
+      <h2>Run the Simulation</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Launch Gazebo simulation world</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 1</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 launch pluto_dashboard dashboard_launch.py sim:=true
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Send test commands to simulated drone</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 2</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            <span class="cmt"># Publish a takeoff command</span><br>
+            ros2 topic pub /drone_command custom_msgs/msg/PlutoMsg "{throttle: 1600, roll: 1500, pitch: 1500, yaw: 1500, aux1: 1500, aux2: 1000}" --once
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box"> In simulation, <code>aux2: 1000</code> arms the drone. <code>aux2: 2000</code> disarms it.</div>
+    </div>
+
+    <!-- P4 -->
+    <div class="page" id="page-p4">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 4</div>
+        <h1>Basic Flight Control</h1>
+        <p class="sub">Arm, takeoff, fly manually, and land the PlutoDrone using keyboard teleop</p>
+      </div>
+
+      <div class="warn-box"> Always fly in an open indoor space, keep hands away from props, and be ready to disarm.</div>
+
+      <h2>Start the Full Stack</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Terminal 1 — plutonode</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 1</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run plutodrone plutonode
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Terminal 2 — plutoserver</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 2</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run plutoserver plutoserver
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Terminal 3 — Keyboard teleop</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 launch plutoserver drone_comb.launch.py
+          </div>
+        </div>
+      </div>
+
+      <h2>Keyboard Controls</h2>
+      <div class="two-col">
+        <div>
+          <h3>Flight Commands</h3>
+          <ul>
+            <li><code>T</code> — Takeoff / Arm</li>
+            <li><code>L</code> — Land / Disarm</li>
+            <li><code>W / S</code> — Throttle up / down</li>
+            <li><code>A / D</code> — Yaw left / right</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Movement</h3>
+          <ul>
+            <li><code>↑ / ↓</code> — Pitch forward / back</li>
+            <li><code>← / →</code> — Roll left / right</li>
+            <li><code>Space</code> — Emergency stop</li>
+            <li><code>H</code> — Hover / altitude hold</li>
+          </ul>
+        </div>
+      </div>
+      <div class="info-box">Full keyboard reference: <a href="http://wiki.ros.org/pluto_drone#Keyboard" target="_blank">wiki.ros.org/pluto_drone#Keyboard</a></div>
+    </div>
+
+    <!-- P5 -->
+    <div class="page" id="page-p5">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 5</div>
+        <h1>Camera Integration</h1>
+        <p class="sub">Stream live H.264 video from PlutoDrone camera and publish as ROS2 image topic</p>
+      </div>
+
+      <div class="warn-box"> Camera module must be attached to the drone. Connect to <strong>PlutoCamera WiFi</strong> (not the drone's default AP).</div>
+
+      <h2>Install Camera Dependencies</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Install ffmpeg and PyAV</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            sudo apt install -y ffmpeg<br>
+            pip install av --break-system-packages<br>
+            ffmpeg -version | head -1<br>
+            <span class="ok">ffmpeg version 6.x</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Start Camera Stream</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Terminal 1 — plutonode</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 1</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run plutodrone plutonode
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Terminal 2 — Camera publisher (720p)</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 2</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            plutocam_publisher --low-def<br>
+            <span class="ok">Connecting to PlutoCamera at 192.168.0.1...</span><br>
+            <span class="ok">Connected to PlutoCamera at 192.168.0.1</span><br>
+            <span class="ok">Starting 720p video stream...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">4</span> Terminal 3 — Verify topic publishes</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 node list<br>
+            <span class="ok">/pluto_camera_publisher</span><br><br>
+            ros2 topic hz /plutocamera/image_raw --window 20<br>
+            <span class="ok">average rate: 25.000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">5</span> View live feed in rqt_image_view</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            sudo apt install -y ros-jazzy-rqt-image-view<br>
+            ros2 run rqt_image_view rqt_image_view<br>
+            <span class="cmt"># Select /plutocamera/image_raw from dropdown</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="error-box"> <strong>Known Issue:</strong> If <code>ros2 topic hz</code> shows no output, the camera publisher node may be missing a <code>rclpy.spin()</code> thread. See the debug report for the exact fix to <code>plutocam_publisher.py</code>.</div>
+    </div>
+
+    <!-- P6 -->
+    <div class="page" id="page-p6">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 6</div>
+        <h1>Hand Gesture Detection</h1>
+        <p class="sub">Use MediaPipe to detect hand gestures from drone camera and control flight</p>
+      </div>
+
+      <h2>How It Works</h2>
+      <p>The <code>hands_worker.py</code> module uses <strong>MediaPipe Hands</strong> to detect hand landmarks from JPEG frames received over a binary stdin/stdout pipe. It runs in a separate Python subprocess (inside a mediapipe conda env with NumPy 1.x) to avoid conflicts with the ROS2 dashboard process (NumPy 2.x).</p>
+
+      <h2>Setup MediaPipe Environment</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Create isolated Python env for MediaPipe</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            python3 -m venv ~/mediapipe_env<br>
+            source ~/mediapipe_env/bin/activate<br>
+            pip install mediapipe opencv-python "numpy&lt;2"<br>
+            deactivate
+          </div>
+        </div>
+      </div>
+
+      <h2>Start the Stack</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Run plutonode + camera (Terminals 1 &amp; 2)</div>
+        <p>Start <code>plutonode</code> and <code>plutocam_publisher --low-def</code> as in Project 5 first.</p>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Launch Dashboard with hand detection</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run pluto_dashboard dashboard_node<br>
+            <span class="cmt"># Open browser: http://localhost:5050</span><br>
+            <span class="cmt"># Enable "Hand Gesture" in Services panel</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Gesture Reference</h2>
+      <div class="two-col">
+        <div>
+          <h3>Recognized Gestures</h3>
+          <ul>
+            <li> Open palm — Hover</li>
+            <li> Fist — Land</li>
+            <li> One finger up — Takeoff</li>
+            <li> Peace sign — Rotate</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Protocol (stdin/stdout)</h3>
+          <ul>
+            <li>Parent → Worker: 4-byte uint32 length + JPEG bytes</li>
+            <li>Worker → Parent: 4-byte uint32 length + annotated JPEG</li>
+            <li>Runs in <code>~/mediapipe_env</code> subprocess</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="info-box"> The hands worker returns the original JPEG unchanged if detection fails for a frame — so the video feed never breaks.</div>
+    </div>
+
+    <!-- P7 -->
+    <div class="page" id="page-p7">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 7</div>
+        <h1>ArUco Detection</h1>
+        <p class="sub">Detect ArUco markers from the drone camera feed using OpenCV</p>
+      </div>
+
+      <h2>Print ArUco Markers</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Generate a 4x4 ArUco marker (ID 0)</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">WSL2 bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            pip install opencv-python --break-system-packages<br>
+            python3 -c "<br>
+            import cv2<br>
+            d = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)<br>
+            img = cv2.aruco.generateImageMarker(d, 0, 300)<br>
+            cv2.imwrite('/tmp/aruco_0.png', img)<br>
+            print('Saved to /tmp/aruco_0.png')"<br>
+            <span class="cmt"># Copy to Windows and print at exactly 10cm x 10cm</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Start Detection Node</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Start plutonode + camera (as in P5)</div>
+        <p>Terminals 1 and 2: <code>plutonode</code> and <code>plutocam_publisher --low-def</code></p>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Terminal 3 — Run ArUco detection node</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run pluto_vision aruco_follow --ros-args -p enabled:=false<br>
+            <span class="cmt"># enabled:=false = detection only, no flight commands</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">4</span> Verify detection output</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 4</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            ros2 topic echo /pluto/aruco_detection<br>
+            <span class="cmt"># Shows marker ID, corners, and estimated pose</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Detection Parameters</h2>
+      <ul>
+        <li>Dictionary: <code>DICT_4X4_50</code> (IDs 0–49)</li>
+        <li>Subscribes to: <code>/plutocamera/image_raw</code></li>
+        <li>Default: <strong>disabled</strong> — enable with <code>-p enabled:=true</code></li>
+        <li>Gain parameter: <code>gain_px_to_rc</code> (default 1.5)</li>
+      </ul>
+    </div>
+
+    <!-- P8 -->
+    <div class="page" id="page-p8">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 8</div>
+        <h1>ArUco Tracking</h1>
+        <p class="sub">Automatically follow an ArUco marker using proportional roll/pitch control</p>
+      </div>
+
+      <div class="warn-box"> The drone will move autonomously. Ensure a clear 2m x 2m space. Keep a thumb on the disarm key.</div>
+
+      <h2>How the Tracker Works</h2>
+      <p>The <code>ArucoFollow</code> node subscribes to <code>/plutocamera/image_raw</code>, detects the marker center, computes pixel error from frame center, and publishes proportional roll/pitch corrections to <code>/drone_command</code>. Throttle stays neutral — the firmware handles altitude hold.</p>
+
+      <h2>Launch Tracking</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Start plutonode + camera (Terminals 1 &amp; 2)</div>
+        <p>Start <code>plutonode</code> and <code>plutocam_publisher --low-def</code> first as in Project 5.</p>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Terminal 3 — Enable ArUco follower</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run pluto_vision aruco_follow \<br>
+              --ros-args \<br>
+              -p enabled:=true \<br>
+              -p gain_px_to_rc:=1.5 \<br>
+              -p dict_id:=0
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Arm and takeoff (Terminal 4)</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 4</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            <span class="cmt"># Arm + takeoff to stable altitude</span><br>
+            ros2 topic pub /drone_command custom_msgs/msg/PlutoMsg \<br>
+              "{throttle: 1600, roll: 1500, pitch: 1500, yaw: 1500, aux1: 1500, aux2: 1000}" \<br>
+              --once<br>
+            <span class="cmt"># Now hold the ArUco marker in view — drone will follow it</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Tuning</h2>
+      <ul>
+        <li>Increase <code>gain_px_to_rc</code> for faster response (risk: overshoot)</li>
+        <li>Decrease for slower, smoother tracking</li>
+        <li>RC range: 1000–2000, neutral at 1500</li>
+        <li>Pixel error at frame edge ≈ ±640px → maps to ±960 RC units at default gain</li>
+      </ul>
+    </div>
+
+    <!-- P9 -->
+    <div class="page" id="page-p9">
+      <div class="page-header-bar">
+        <div class="proj-tag">PROJECT 9</div>
+        <h1>ArUco Hovering</h1>
+        <p class="sub">Maintain precise position above an ArUco marker using altitude + position hold</p>
+      </div>
+
+      <div class="warn-box"> Advanced project — requires stable camera feed, tuned PID, and altitude hold enabled on firmware.</div>
+
+      <h2>How Hovering Works</h2>
+      <p>ArUco hovering combines <strong>lateral tracking</strong> (P8) with <strong>altitude control</strong> using the barometer. The node estimates marker distance from apparent size to maintain a fixed height above the marker, while roll/pitch keep it centered.</p>
+
+      <h2>Prerequisites</h2>
+      <ul>
+        <li>Project 5 camera feed working at stable 25 Hz</li>
+        <li>Project 8 tracking working (marker centering)</li>
+        <li>Altitude hold enabled in Pluto firmware (aux channel)</li>
+        <li>Marker physical size measured and configured (e.g. 10cm)</li>
+      </ul>
+
+      <h2>Launch Full Hover Stack</h2>
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Terminal 1 — plutonode</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 1</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run plutodrone plutonode
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Terminal 2 — Camera publisher</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 2</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            plutocam_publisher --low-def
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Terminal 3 — Altitude hold node</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run pluto_dashboard pid_altitude_hold
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">4</span> Terminal 4 — ArUco follower (enabled)</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 4</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            ros2 run pluto_vision aruco_follow \<br>
+              --ros-args \<br>
+              -p enabled:=true \<br>
+              -p gain_px_to_rc:=1.2
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">5</span> Terminal 5 — Arm &amp; set altitude hold mode</div>
+        <div class="terminal">
+          <div class="terminal-bar"><div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div><span class="terminal-label">Terminal 5</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <div class="terminal-body">
+            source /opt/ros/jazzy/setup.bash<br>
+            source ~/pluto_ws/pluto_ros2_package/install/setup.bash<br>
+            <span class="cmt"># Arm drone with altitude hold (aux1=2000)</span><br>
+            ros2 topic pub /drone_command custom_msgs/msg/PlutoMsg \<br>
+              "{throttle: 1500, roll: 1500, pitch: 1500, yaw: 1500, aux1: 2000, aux2: 1000}" \<br>
+              --rate 20<br>
+            <span class="cmt"># Place ArUco marker below drone — it will hold position above it</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Expected Behavior</h2>
+      <ul>
+        <li>Drone takes off and holds altitude via barometer PID</li>
+        <li>Camera detects ArUco marker below/in front</li>
+        <li>Roll/pitch corrects to keep marker centered in frame</li>
+        <li>Move the marker — drone follows and re-centers</li>
+        <li>Remove marker from view — drone returns to neutral hover</li>
+      </ul>
+
+      <div class="info-box"> <strong>Tip:</strong> Start with <code>gain_px_to_rc:=0.8</code> for very gentle response. Increase slowly until tracking feels crisp without oscillation.</div>
+
+      <div class="success-box"> Congratulations — you've completed all 10 projects from bare WSL2 to autonomous ArUco hovering!</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function copyCode(btn) {
+    const body = btn.closest('.terminal').querySelector('.terminal-body').cloneNode(true);
+    body.querySelectorAll('.out, .ok, .cmt, .prompt').forEach(el => el.remove());
+    const text = body.innerText.replace(/^\s*\n/gm, '').trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerText = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerText = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function showPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function filterNav(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+      item.style.display = (!q || item.textContent.toLowerCase().includes(q)) ? '' : 'none';
+    });
+  }
+</script>
+</body>
+</html>
