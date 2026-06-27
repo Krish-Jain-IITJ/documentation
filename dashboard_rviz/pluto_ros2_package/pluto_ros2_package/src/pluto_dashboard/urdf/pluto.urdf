@@ -1,0 +1,515 @@
+<?xml version="1.0"?>
+<!--
+  Quadrotor URDF — single-file, primitive-geometry version
+  Inspired by: mathworks/quadcopter-simulation-ros-gazebo
+               Gazebo/urdf/quadrotor_base.urdf.xacro  (mass, inertia, structure)
+               Gazebo/urdf/quadrotor_simple_controller.urdf.xacro (rotor layout)
+
+  Physical parameters match the MathWorks model:
+    Body mass : 1.477 kg
+    Ixx = Iyy : 0.01152 kg·m²
+    Izz        : 0.0218  kg·m²
+
+  Rotor layout (X-configuration, top view):
+       FL(+x,+y)   FR(+x,-y)
+            ×   ×
+            ×   ×
+       RL(-x,+y)   RR(-x,-y)
+
+  Each rotor arm length from centre: 0.17 m (matches IMAV 2017 platform)
+-->
+<robot name="quadrotor">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MATERIALS
+  ═══════════════════════════════════════════════════════════ -->
+  <material name="dark_grey">
+    <color rgba="0.2 0.2 0.2 1.0"/>
+  </material>
+  <material name="black">
+    <color rgba="0.05 0.05 0.05 1.0"/>
+  </material>
+  <material name="orange">
+    <color rgba="1.0 0.5 0.0 1.0"/>
+  </material>
+  <material name="white">
+    <color rgba="0.9 0.9 0.9 1.0"/>
+  </material>
+  <material name="red">
+    <color rgba="0.8 0.1 0.1 1.0"/>
+  </material>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       BASE LINK  (fuselage / flight controller board)
+  ═══════════════════════════════════════════════════════════ -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <!-- Mass from MathWorks xacro -->
+      <mass value="1.477"/>
+      <!-- Inertia tensor from MathWorks xacro -->
+      <inertia ixx="0.01152" ixy="0.0" ixz="0.0"
+               iyy="0.01152" iyz="0.0"
+               izz="0.0218"/>
+    </inertial>
+
+    <!-- Central body (flight controller + battery housing) -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.10 0.10 0.04"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.10 0.10 0.04"/>
+      </geometry>
+    </collision>
+
+    <!-- Arm: front-left (+x, +y) -->
+    <visual>
+      <origin xyz="0.085 0.085 0" rpy="0 0 0.7854"/>
+      <geometry>
+        <box size="0.24 0.015 0.012"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0.085 0.085 0" rpy="0 0 0.7854"/>
+      <geometry>
+        <box size="0.24 0.015 0.012"/>
+      </geometry>
+    </collision>
+
+    <!-- Arm: front-right (+x, -y) -->
+    <visual>
+      <origin xyz="0.085 -0.085 0" rpy="0 0 -0.7854"/>
+      <geometry>
+        <box size="0.24 0.015 0.012"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0.085 -0.085 0" rpy="0 0 -0.7854"/>
+      <geometry>
+        <box size="0.24 0.015 0.012"/>
+      </geometry>
+    </collision>
+
+    <!-- Arm: rear-left (-x, +y) -->
+    <visual>
+      <origin xyz="-0.085 0.085 0" rpy="0 0 -0.7854"/>
+      <geometry>
+        <box size="0.24 0.015 0.012"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.085 0.085 0" rpy="0 0 -0.7854"/>
+      <geometry>
+        <box size="0.24 0.015 0.012"/>
+      </geometry>
+    </collision>
+
+    <!-- Arm: rear-right (-x, -y) -->
+    <visual>
+      <origin xyz="-0.085 -0.085 0" rpy="0 0 0.7854"/>
+      <geometry>
+        <box size="0.24 0.015 0.012"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.085 -0.085 0" rpy="0 0 0.7854"/>
+      <geometry>
+        <box size="0.24 0.015 0.012"/>
+      </geometry>
+    </collision>
+
+    <!-- Landing leg: front-left -->
+    <visual>
+      <origin xyz="0.07 0.07 -0.045" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <!-- Landing leg: front-right -->
+    <visual>
+      <origin xyz="0.07 -0.07 -0.045" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <!-- Landing leg: rear-left -->
+    <visual>
+      <origin xyz="-0.07 0.07 -0.045" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <!-- Landing leg: rear-right -->
+    <visual>
+      <origin xyz="-0.07 -0.07 -0.045" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+
+    <!-- Forward direction marker (red nose stripe) -->
+    <visual>
+      <origin xyz="0.052 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <cylinder radius="0.008" length="0.01"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+  </link>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ROTOR MOTOR MOUNTS  (4 × motor-can cylinder)
+       Each motor is a fixed child link of base_link.
+       Arm length r = 0.17 m along the diagonal → 0.17/√2 ≈ 0.1202 m
+       per axis, matching the IMAV 2017 550-class frame.
+  ═══════════════════════════════════════════════════════════ -->
+
+  <!-- ── MOTOR FRONT-LEFT ──────────────────────────────────── -->
+  <link name="motor_fl_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1e-5" ixy="0" ixz="0"
+               iyy="1e-5" iyz="0" izz="1e-5"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.014" length="0.025"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.014" length="0.025"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="motor_fl_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="motor_fl_link"/>
+    <origin xyz="0.1202 0.1202 0.01" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── MOTOR FRONT-RIGHT ─────────────────────────────────── -->
+  <link name="motor_fr_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1e-5" ixy="0" ixz="0"
+               iyy="1e-5" iyz="0" izz="1e-5"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.014" length="0.025"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.014" length="0.025"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="motor_fr_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="motor_fr_link"/>
+    <origin xyz="0.1202 -0.1202 0.01" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── MOTOR REAR-LEFT ───────────────────────────────────── -->
+  <link name="motor_rl_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1e-5" ixy="0" ixz="0"
+               iyy="1e-5" iyz="0" izz="1e-5"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.014" length="0.025"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.014" length="0.025"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="motor_rl_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="motor_rl_link"/>
+    <origin xyz="-0.1202 0.1202 0.01" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── MOTOR REAR-RIGHT ──────────────────────────────────── -->
+  <link name="motor_rr_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1e-5" ixy="0" ixz="0"
+               iyy="1e-5" iyz="0" izz="1e-5"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.014" length="0.025"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.014" length="0.025"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="motor_rr_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="motor_rr_link"/>
+    <origin xyz="-0.1202 -0.1202 0.01" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PROPELLERS  (spinning links — continuous joints)
+       CW  = front-left  & rear-right
+       CCW = front-right & rear-left
+       (standard X-frame convention)
+  ═══════════════════════════════════════════════════════════ -->
+
+  <!-- ── PROPELLER FRONT-LEFT  (CW) ───────────────────────── -->
+  <link name="prop_fl_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.010"/>
+      <inertia ixx="3e-6" ixy="0" ixz="0"
+               iyy="3e-6" iyz="0" izz="6e-6"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.005" rpy="0 0 0"/>
+      <geometry>
+        <!-- Thin disc approximates a 2-blade prop -->
+        <cylinder radius="0.115" length="0.003"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+  </link>
+  <joint name="prop_fl_joint" type="continuous">
+    <parent link="motor_fl_link"/>
+    <child  link="prop_fl_link"/>
+    <origin xyz="0 0 0.015" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>   <!-- CW when viewed from above → negative spin -->
+  </joint>
+
+  <!-- ── PROPELLER FRONT-RIGHT (CCW) ──────────────────────── -->
+  <link name="prop_fr_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.010"/>
+      <inertia ixx="3e-6" ixy="0" ixz="0"
+               iyy="3e-6" iyz="0" izz="6e-6"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.005" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.115" length="0.003"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+  <joint name="prop_fr_joint" type="continuous">
+    <parent link="motor_fr_link"/>
+    <child  link="prop_fr_link"/>
+    <origin xyz="0 0 0.015" rpy="0 0 0"/>
+    <axis xyz="0 0 -1"/>  <!-- CCW -->
+  </joint>
+
+  <!-- ── PROPELLER REAR-LEFT  (CCW) ───────────────────────── -->
+  <link name="prop_rl_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.010"/>
+      <inertia ixx="3e-6" ixy="0" ixz="0"
+               iyy="3e-6" iyz="0" izz="6e-6"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.005" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.115" length="0.003"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+  <joint name="prop_rl_joint" type="continuous">
+    <parent link="motor_rl_link"/>
+    <child  link="prop_rl_link"/>
+    <origin xyz="0 0 0.015" rpy="0 0 0"/>
+    <axis xyz="0 0 -1"/>  <!-- CCW -->
+  </joint>
+
+  <!-- ── PROPELLER REAR-RIGHT (CW) ────────────────────────── -->
+  <link name="prop_rr_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.010"/>
+      <inertia ixx="3e-6" ixy="0" ixz="0"
+               iyy="3e-6" iyz="0" izz="6e-6"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.005" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.115" length="0.003"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+  </link>
+  <joint name="prop_rr_joint" type="continuous">
+    <parent link="motor_rr_link"/>
+    <child  link="prop_rr_link"/>
+    <origin xyz="0 0 0.015" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>   <!-- CW -->
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       IMU LINK  (centred at body CoM, as in the MathWorks model)
+  ═══════════════════════════════════════════════════════════ -->
+  <link name="imu_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.001"/>
+      <inertia ixx="1e-7" ixy="0" ixz="0"
+               iyy="1e-7" iyz="0" izz="1e-7"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.01 0.004"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="imu_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DOWNWARD-FACING CAMERA  (optional — comment out if unused)
+       Mimics the generic_camera sensor in the MathWorks repo.
+  ═══════════════════════════════════════════════════════════ -->
+  <link name="camera_down_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.005"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0"
+               iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.015 0.015 0.015"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.015 0.015 0.015"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="camera_down_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="camera_down_link"/>
+    <!-- Mounted on belly, pointing straight down (rotated π about Y) -->
+    <origin xyz="0.0 0.0 -0.025" rpy="0 1.5708 0"/>
+  </joint>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       GAZEBO PLUGINS  — uncomment / adapt for your package name
+  ═══════════════════════════════════════════════════════════ -->
+  <!--
+  <gazebo>
+    <plugin name="quadrotor_simple_controller"
+            filename="libhector_quadrotor_simple_controller.so">
+      <robotNamespace></robotNamespace>
+      <topicName>cmd_vel</topicName>
+      <imuTopic>imu</imuTopic>
+      <stateTopic>ground_truth/state</stateTopic>
+      <maxForce>30</maxForce>
+      <motionSmallNoise>0.05</motionSmallNoise>
+      <motionDriftNoise>0.03</motionDriftNoise>
+      <motionDriftNoiseTime>5.0</motionDriftNoiseTime>
+    </plugin>
+    <plugin name="quadrotor_aerodynamics"
+            filename="libhector_quadrotor_aerodynamics.so">
+      <robotNamespace></robotNamespace>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="imu_link">
+    <sensor type="imu" name="imu_sensor">
+      <always_on>true</always_on>
+      <update_rate>200</update_rate>
+      <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+        <robotNamespace></robotNamespace>
+        <topicName>imu</topicName>
+        <bodyName>imu_link</bodyName>
+        <updateRateHZ>200</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>imu_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="camera_down_link">
+    <sensor type="camera" name="downward_camera">
+      <update_rate>30</update_rate>
+      <camera name="down">
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+      </camera>
+      <plugin name="camera_down_controller"
+              filename="libgazebo_ros_camera.so">
+        <robotNamespace></robotNamespace>
+        <cameraName>camera_down</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_down_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+  -->
+
+</robot>

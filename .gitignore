@@ -1,0 +1,16 @@
+# Comprehensive .gitignore for the project
+.DS_Store
+.idea/
+.vscode/
+__pycache__/
+*.pyc
+*.o
+*.so
+*.a
+*.log
+*.tar.gz
+*.swp
+# Build, install and log directories (recursively)
+**/build/**
+**/install/**
+**/log/**

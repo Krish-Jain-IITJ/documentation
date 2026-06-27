@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pluto</title>
+<style>
+  :root {
+    --bg:#0a0c12;
+    --panel:#141824;
+    --panel-2:#1c2130;
+    --fg:#f1f3f5;
+    --dim:#a0a8b8;
+    --muted:#6b7280;
+    --line:rgba(255,255,255,0.10);
+    --line-strong:rgba(255,255,255,0.18);
+    --accent:#60a5fa;
+    --good:#4ade80;
+    --warn:#fbbf24;
+    --danger:#f87171;
+    --purple:#a78bfa;
+    --mono:"SF Mono",ui-monospace,Menlo,monospace;
+  }
+  *, *::before, *::after { box-sizing:border-box; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--fg); }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;
+    font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  button, input, select { font:inherit; color:inherit; }
+  button { background:none; border:none; cursor:pointer; padding:0; }
+
+  /* ── Top bar ── */
+  .top {
+    display:flex; align-items:center; gap:16px;
+    padding:16px 28px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+  }
+  .top .name { font-weight:700; font-size:15px; letter-spacing:-0.01em; display:flex; align-items:center; gap:10px; }
+  .top .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); }
+  .top .dot.on  { background:var(--good); box-shadow:0 0 8px rgba(74,222,128,0.5); }
+  .top .dot.off { background:var(--danger); box-shadow:0 0 8px rgba(248,113,113,0.5); }
+  .top .status { color:var(--dim); font-size:12.5px; }
+  .spacer { flex:1; }
+
+  /* ── Tabs ── */
+  nav.tabs {
+    display:flex; gap:0;
+    padding:0 28px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    overflow-x:auto;
+  }
+  nav.tabs button {
+    color:var(--dim);
+    padding:13px 18px;
+    font-size:13px;
+    font-weight:500;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+    white-space:nowrap;
+    transition:color 0.1s;
+  }
+  nav.tabs button:hover { color:var(--fg); }
+  nav.tabs button.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+  /* ── Main ── */
+  main { max-width:900px; margin:0 auto; padding:28px 32px 120px; }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* ── Section ── */
+  section {
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 22px;
+    margin-bottom:16px;
+  }
+  h2 {
+    font-size:11.5px; font-weight:600; letter-spacing:0.08em;
+    text-transform:uppercase; color:var(--dim);
+    margin:0 0 14px;
+  }
+  h2 .count { color:var(--muted); text-transform:none; letter-spacing:0; font-weight:400; margin-left:10px; font-size:11.5px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    padding:10px 16px;
+    font-size:13.5px; font-weight:500;
+    color:var(--fg);
+    background:var(--panel-2);
+    border:1px solid var(--line-strong);
+    border-radius:7px;
+    transition:all 0.1s;
+    white-space:nowrap;
+  }
+  .btn:hover { background:#262d3f; border-color:rgba(255,255,255,0.25); }
+  .btn:active { transform:scale(0.98); }
+  .btn.primary { background:var(--accent); color:#0a0c12; border-color:var(--accent); font-weight:600; }
+  .btn.primary:hover { background:#7fb5fa; border-color:#7fb5fa; }
+  .btn.good { background:var(--good); color:#0a0c12; border-color:var(--good); font-weight:600; }
+  .btn.good:hover { background:#6ae68f; border-color:#6ae68f; }
+  .btn.warn { background:var(--warn); color:#0a0c12; border-color:var(--warn); font-weight:600; }
+  .btn.warn:hover { background:#fcc746; border-color:#fcc746; }
+  .btn.danger { background:var(--danger); color:#0a0c12; border-color:var(--danger); font-weight:700; padding:14px; font-size:15px; }
+  .btn.danger:hover { background:#fa8e8e; border-color:#fa8e8e; }
+  .btn.purple { background:var(--purple); color:#0a0c12; border-color:var(--purple); font-weight:600; }
+  .btn.purple:hover { background:#b89cff; border-color:#b89cff; }
+  .btn.sm { padding:6px 10px; font-size:12px; }
+  .btn.ghost { background:transparent; color:var(--dim); }
+  .btn.ghost:hover { background:var(--panel-2); color:var(--fg); }
+  .btn.toggle.on { background:var(--good); color:#0a0c12; border-color:var(--good); font-weight:600; }
+  .btn.toggle.off { background:var(--panel-2); color:var(--dim); }
+  .btn.listening { background:var(--warn); color:#0a0c12; border-color:var(--warn); animation: pulse 0.8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
+
+  /* ── Gamepad live ── */
+  .gp-axis-row { display:grid; grid-template-columns:50px 1fr 60px 90px 80px; gap:10px; align-items:center; margin:6px 0; }
+  .gp-axis-row .name { font-weight:600; color:var(--fg); }
+  .gp-bar { position:relative; height:14px; background:var(--panel-2); border:1px solid var(--line); border-radius:4px; overflow:hidden; }
+  .gp-bar .fill { position:absolute; top:0; bottom:0; left:50%; background:var(--accent); transition:none; }
+  .gp-bar .center { position:absolute; top:0; bottom:0; left:50%; width:1px; background:var(--muted); }
+  .gp-bar .fill.neg { background:var(--warn); }
+  .gp-axis-row .v { color:var(--dim); font-family:ui-monospace,monospace; font-size:12px; text-align:right; }
+  .gp-axis-row .assigned { color:var(--good); font-size:11.5px; }
+  .gp-btn-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(56px, 1fr)); gap:6px; }
+  .gp-btn { padding:8px 4px; text-align:center; background:var(--panel-2); border:1px solid var(--line); border-radius:6px; font-family:ui-monospace,monospace; font-size:12px; color:var(--dim); }
+  .gp-btn.pressed { background:var(--good); color:#0a0c12; border-color:var(--good); font-weight:700; }
+  .gp-btn .lbl { display:block; font-size:10px; color:var(--muted); margin-top:2px; }
+  .gp-btn.pressed .lbl { color:rgba(0,0,0,0.6); }
+
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+
+  /* ── Status chips ── */
+  .chips { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; font-size:12.5px; }
+  .chip {
+    display:inline-flex; align-items:center; gap:8px;
+    color:var(--dim);
+    padding:6px 12px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:999px;
+  }
+  .chip .dot { width:7px; height:7px; border-radius:50%; background:var(--muted); }
+  .chip.on  { color:var(--fg); border-color:rgba(74,222,128,0.35); }
+  .chip.on .dot { background:var(--good); }
+  .chip.warn { color:var(--warn); border-color:rgba(251,191,36,0.35); }
+  .chip.warn .dot { background:var(--warn); }
+
+  /* ── Telemetry ── */
+  .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .metric {
+    padding:14px 16px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+  }
+  .metric .k { font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:0.05em; font-weight:500; }
+  .metric .v { font-family:var(--mono); font-size:22px; color:var(--fg); margin-top:6px; font-weight:400; }
+  .metric.warn .v { color:var(--warn); }
+  .metric.danger .v { color:var(--danger); }
+
+  /* ── Slider ── */
+  .slider { display:grid; grid-template-columns:80px 1fr 54px; align-items:center; gap:12px; padding:6px 0; }
+  .slider label { font-size:12.5px; color:var(--dim); }
+  .slider .val { font-family:var(--mono); font-size:12.5px; text-align:right; color:var(--fg); background:var(--panel-2); padding:4px 8px; border-radius:4px; }
+  input[type=range] { -webkit-appearance:none; appearance:none; background:transparent; width:100%; }
+  input[type=range]::-webkit-slider-runnable-track {
+    height:4px; background:var(--panel-2); border-radius:2px;
+    border:1px solid var(--line);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; appearance:none;
+    width:16px; height:16px; border-radius:50%;
+    background:var(--accent); margin-top:-7px; cursor:pointer;
+    box-shadow:0 0 0 2px var(--panel);
+  }
+
+  /* ── D-pad ── */
+  .dpad { display:grid; grid-template-columns:repeat(3,64px); gap:6px; justify-content:center; }
+  .dpad .btn { padding:14px 0; font-size:14px; }
+  .dpad .empty { background:transparent; cursor:default; }
+
+  /* ── Tables ── */
+  table.map { width:100%; border-collapse:collapse; }
+  table.map th {
+    text-align:left; font-size:11px; font-weight:500;
+    text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--dim); padding:8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  table.map td {
+    padding:9px 0;
+    border-bottom:1px solid var(--line);
+    font-size:12.5px;
+  }
+  table.map td.code { font-family:var(--mono); color:var(--fg); }
+  table.map td.actions { text-align:right; }
+  table.map tr:last-child td { border-bottom:none; }
+  .unmapped { color:var(--muted); font-style:italic; font-size:11.5px; }
+  .listen { color:var(--warn); font-family:var(--mono); font-size:11.5px; animation:pulse 1s infinite; }
+
+  select {
+    background:var(--panel-2); color:var(--fg);
+    border:1px solid var(--line-strong); border-radius:5px;
+    padding:5px 10px; font-size:12.5px;
+  }
+  .check { display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--dim); cursor:pointer; }
+  .check input { accent-color:var(--accent); }
+  .hint { font-size:12px; color:var(--dim); line-height:1.6; margin-top:10px; }
+  .hint kbd {
+    font-family:var(--mono); font-size:11px;
+    background:var(--panel-2); border:1px solid var(--line-strong);
+    padding:1px 6px; border-radius:4px; color:var(--fg);
+  }
+  details summary { cursor:pointer; color:var(--dim); font-size:12px; padding:6px 0; list-style:none; user-select:none; }
+  details summary::before { content:"+ "; }
+  details[open] summary::before { content:"− "; }
+  details summary:hover { color:var(--fg); }
+
+  pre { background:var(--panel-2); padding:12px; border-radius:6px; font-size:11.5px; overflow:auto; max-height:180px; margin:0; font-family:var(--mono); color:var(--fg); border:1px solid var(--line); }
+
+  .graph { margin-bottom:16px; }
+  .graph-head { display:flex; justify-content:space-between; font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; font-weight:500; }
+  .graph canvas { display:block; width:100%; height:96px; background:var(--panel-2); border-radius:6px; border:1px solid var(--line); }
+  .pid-input { background:var(--panel-2); color:var(--fg); border:1px solid var(--line-strong); border-radius:5px; padding:5px 8px; font-family:var(--mono); font-size:12.5px; width:64px; text-align:center; }
+
+  /* ── Dock ── */
+  .dock {
+    position:fixed; bottom:0; left:0; right:0;
+    padding:14px 28px;
+    background:linear-gradient(to top, var(--bg) 60%, transparent);
+  }
+  .dock .btn { width:100%; max-width:900px; display:flex; margin:0 auto; padding:14px; }
+
+  @media (max-width: 640px) {
+    .top, nav.tabs, main, .dock { padding-left:18px; padding-right:18px; }
+    .grid4, .metrics { grid-template-columns:repeat(2,1fr); }
+  }
+
+  /* ── CrazyRadio panel ── */
+  .radio-badge {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:5px 12px; border-radius:999px; font-size:12px; font-weight:500;
+    border:1px solid var(--line);
+  }
+  .radio-badge.connected { background:rgba(167,139,250,0.12); color:var(--purple); border-color:rgba(167,139,250,0.35); }
+  .radio-badge.idle { background:var(--panel-2); color:var(--dim); }
+  .radio-input-row { display:grid; grid-template-columns:110px 1fr; gap:10px; align-items:center; margin:6px 0; }
+  .radio-input-row label { font-size:12.5px; color:var(--dim); }
+  .radio-input-row input { background:var(--panel-2); border:1px solid var(--line); border-radius:5px; padding:6px 10px; color:var(--fg); width:100%; }
+  .radio-input-row input:focus { outline:1px solid var(--purple); }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <span class="name"><span class="dot" id="logo-dot"></span>Pluto</span>
+  <span class="status" id="status-text">connecting…</span>
+</div>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="fly">Fly</button>
+  <button class="tab-btn" data-tab="calibrate">Calibrate</button>
+  <button class="tab-btn" data-tab="gamepad">Gamepad setup</button>
+  <button class="tab-btn" data-tab="keyboard">Keyboard setup</button>
+  <button class="tab-btn" data-tab="logs">Logs</button>
+  <button class="tab-btn" data-tab="advanced">Advanced</button>
+</nav>
+
+<main>
+
+  <!-- ═══ FLY ═══ -->
+  <div class="tab-content active" id="tab-fly">
+    <section>
+      <h2>Services <span class="count" id="svc-hint">detecting…</span></h2>
+      <div class="row" id="svc-row"></div>
+      <details style="margin-top:10px;"><summary>logs</summary>
+        <div class="row" style="margin-top:6px;">
+          <button class="btn sm ghost" onclick="showLog('drone')">drone log</button>
+          <button class="btn sm ghost" onclick="showLog('camera')">camera log</button>
+        </div>
+        <pre id="svc-log" style="margin-top:8px; max-height:180px;">—</pre>
+      </details>
+    </section>
+
+
+
+    <section id="pid-section">
+      <h2>PID Altitude Hold
+        <span id="pid-badge" class="radio-badge idle" style="margin-left:10px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;margin-right:5px;"></span>
+          Disabled
+        </span>
+      </h2>
+      <p style="margin:0 0 12px;color:var(--dim);font-size:12.5px;">
+        Drone hovers at a fixed altitude using barometer feedback.
+        Arm and take off manually first, then enable hold.
+      </p>
+
+      <!-- Target altitude -->
+      <div class="radio-input-row" style="margin-bottom:12px;">
+        <label>Target (m)</label>
+        <input type="number" id="pid-target" value="1.0" min="0.3" max="5.0" step="0.1"
+               style="width:100px;" oninput="pidUpdateTarget(this.value)"/>
+      </div>
+
+      <!-- Enable / Disable -->
+      <div class="row" style="margin-bottom:14px;">
+        <button class="btn purple" id="pid-enable-btn"  onclick="pidEnable()"  style="flex:1;">Enable Hold</button>
+        <button class="btn ghost"  id="pid-disable-btn" onclick="pidDisable()" style="flex:1;display:none;">Disable Hold</button>
+      </div>
+
+      <!-- Live state -->
+      <div id="pid-live" style="display:none;background:var(--panel-2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12.5px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+          <div><div style="color:var(--dim);font-size:11px;">TARGET</div><div id="pl-target" style="font-size:18px;font-weight:600;color:var(--purple);">—</div></div>
+          <div><div style="color:var(--dim);font-size:11px;">CURRENT</div><div id="pl-current" style="font-size:18px;font-weight:600;">—</div></div>
+          <div><div style="color:var(--dim);font-size:11px;">ERROR</div><div id="pl-error" style="font-size:18px;font-weight:600;color:var(--accent);">—</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;margin-top:8px;">
+          <div><div style="color:var(--dim);font-size:11px;">ROLL</div><div id="pl-roll">—</div></div>
+          <div><div style="color:var(--dim);font-size:11px;">PITCH</div><div id="pl-pitch">—</div></div>
+        </div>
+      </div>
+
+      <!-- PID Gains tuning -->
+      <details style="margin-top:4px;">
+        <summary style="cursor:pointer;font-size:13px;color:var(--dim);margin-bottom:10px;">⚙️ Tune PID Gains</summary>
+        <div class="radio-input-row"><label>Kp</label><input type="number" id="pid-kp" value="120" step="5"/></div>
+        <div class="radio-input-row"><label>Ki</label><input type="number" id="pid-ki" value="15"  step="1"/></div>
+        <div class="radio-input-row"><label>Kd</label><input type="number" id="pid-kd" value="80"  step="5"/></div>
+        <button class="btn ghost sm" onclick="pidSendGains()" style="margin-top:8px;width:100%;">Apply Gains</button>
+        <div id="pid-gains-msg" style="font-size:11px;color:var(--dim);margin-top:6px;"></div>
+      </details>
+
+      <div id="pid-msg" style="margin-top:8px;font-size:12px;color:var(--dim);"></div>
+    </section>
+
+    <section id="radio-section">
+      <h2>Connection Mode
+        <span id="radio-badge" class="radio-badge idle" style="margin-left:10px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:currentColor;"></span>
+          WiFi (default)
+        </span>
+      </h2>
+      <p style="margin:0 0 12px; color:var(--dim); font-size:12.5px;">
+        Choose how the dashboard talks to the drone.
+        <strong style="color:var(--fg);">WiFi</strong> — join the Pluto AP or WIFI-1080p-* and start the drone node as usual.<br>
+        <strong style="color:var(--fg);">CrazyRadio PA</strong> — plug the USB dongle, set channel/address, then click Connect.
+      </p>
+
+      <div class="row" style="margin-bottom:12px;">
+        <button class="btn toggle" id="rb-wifi"  onclick="setRadioMode('wifi')"  style="flex:1;">📶 WiFi</button>
+        <button class="btn toggle" id="rb-radio" onclick="setRadioMode('radio')" style="flex:1;">📡 CrazyRadio PA</button>
+      </div>
+
+      <div id="radio-config" style="display:none;">
+        <div class="radio-input-row">
+          <label>Channel (0–125)</label>
+          <input type="number" id="ri-channel" min="0" max="125" value="80" />
+        </div>
+        <div class="radio-input-row">
+          <label>Address (hex)</label>
+          <input type="text" id="ri-address" maxlength="10" value="E7E7E7E7E7" placeholder="E7E7E7E7E7" />
+        </div>
+        <div class="radio-input-row">
+          <label>Datarate</label>
+          <select id="ri-datarate" style="background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:6px 10px;color:var(--fg);">
+            <option value="2M" selected>2M</option>
+            <option value="1M">1M</option>
+            <option value="250K">250K</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn purple" onclick="radioConnect()" style="flex:1;" id="radio-connect-btn">Connect via CrazyRadio</button>
+          <button class="btn ghost sm" onclick="radioDisconnect()" id="radio-disconnect-btn" style="display:none;">Disconnect</button>
+        </div>
+        <div id="radio-msg" style="margin-top:8px; font-size:12px; color:var(--dim);"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="chips">
+        <span class="chip" id="c-armed"><span class="dot"></span>disarmed</span>
+        <span class="chip" id="c-mode"><span class="dot"></span>angle</span>
+      </div>
+
+      <div class="grid4">
+        <button class="btn good"    onclick="post('/api/arm')">Arm</button>
+        <button class="btn warn"    onclick="post('/api/disarm')">Disarm</button>
+        <button class="btn primary" onclick="post('/api/takeoff')">Take off</button>
+        <button class="btn primary" onclick="post('/api/land')">Land</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Input</h2>
+      <div class="row">
+        <button class="btn toggle" id="b-none" onclick="setInput('none')" style="flex:1;">None</button>
+        <button class="btn toggle" id="b-keys" onclick="setInput('keys')" style="flex:1;">Keyboard</button>
+        <button class="btn toggle" id="b-gp"   onclick="setInput('gp')"   style="flex:1;">Gamepad</button>
+        <button class="btn toggle" id="b-dev"  onclick="toggleDev()" title="AUX2 debug switch">Dev</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Sticks</h2>
+      <div class="slider"><label>Roll</label>     <input type="range" min="1000" max="2000" value="1500" id="s-roll"     oninput="onSlide('roll',this.value)"     onchange="recenterIfAngle('roll')" /><span class="val" id="v-roll">1500</span></div>
+      <div class="slider"><label>Pitch</label>    <input type="range" min="1000" max="2000" value="1500" id="s-pitch"    oninput="onSlide('pitch',this.value)"    onchange="recenterIfAngle('pitch')" /><span class="val" id="v-pitch">1500</span></div>
+      <div class="slider"><label>Yaw</label>      <input type="range" min="1000" max="2000" value="1500" id="s-yaw"      oninput="onSlide('yaw',this.value)" /><span class="val" id="v-yaw">1500</span></div>
+      <div class="slider"><label>Throttle</label> <input type="range" min="1000" max="2000" value="1500" id="s-throttle" oninput="onSlide('throttle',this.value)" /><span class="val" id="v-throttle">1500</span></div>
+      <div class="slider" style="margin-top:8px;">
+        <label>Sensitivity</label>
+        <input type="range" min="100" max="2000" step="50" value="600" id="s-sens" oninput="setSens(this.value)" />
+        <span class="val" id="v-sens">600 /s</span>
+      </div>
+      <div class="row" style="margin-top:10px; align-items:center;">
+        <label class="check"><input type="checkbox" id="auto-center" checked onchange="updateMode()"> Angle mode</label>
+        <span class="spacer"></span>
+        <button class="btn sm ghost" onclick="post('/api/neutral'); resetSliders();">Center</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Camera <span class="count" id="cam-status">—</span></h2>
+      <div id="cam-box" style="position:relative; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; min-height:240px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+        <img id="cam-img" style="display:none; width:100%; max-height:420px; object-fit:contain; background:#000;" />
+        <span id="cam-msg" style="color:var(--dim); font-size:12.5px;">no feed · start camera node</span>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <button class="btn sm" onclick="toggleCam()" id="cam-btn">Start</button>
+        <button class="btn sm ghost" onclick="camSnapshot()">Snapshot</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Telemetry</h2>
+      <div class="metrics">
+        <div class="metric"><div class="k">Battery</div><div class="v" id="t-bat">—</div></div>
+        <div class="metric"><div class="k">Current</div><div class="v" id="t-cur">—</div></div>
+        <div class="metric"><div class="k">SoC</div><div class="v" id="t-soc">—</div></div>
+        <div class="metric"><div class="k">Altitude</div><div class="v" id="t-alt">—</div></div>
+        <div class="metric"><div class="k">Yaw</div><div class="v" id="t-yaw">—</div></div>
+        <div class="metric"><div class="k">Roll</div><div class="v" id="t-roll">—</div></div>
+        <div class="metric"><div class="k">Pitch</div><div class="v" id="t-pitch">—</div></div>
+        <div class="metric"><div class="k">Drawn</div><div class="v" id="t-drawn">—</div></div>
+        <div class="metric"><div class="k">Remain</div><div class="v" id="t-remain">—</div></div>
+      </div>
+      <div class="graph" style="margin-top:14px;">
+        <div class="graph-head"><span>Attitude · r p y</span></div>
+        <canvas id="g-att"></canvas>
+      </div>
+      <details style="margin-top:8px;">
+        <summary>more</summary>
+        <div class="graph" style="margin-top:8px;">
+          <div class="graph-head"><span>Gyro · x y z</span></div>
+          <canvas id="g-gyro"></canvas>
+        </div>
+        <div class="graph">
+          <div class="graph-head"><span>Accel · x y z</span></div>
+          <canvas id="g-acc"></canvas>
+        </div>
+        <div class="metrics" style="margin-top:10px;">
+          <div class="metric"><div class="k">Acc X</div><div class="v" id="t-accx">—</div></div>
+          <div class="metric"><div class="k">Acc Y</div><div class="v" id="t-accy">—</div></div>
+          <div class="metric"><div class="k">Acc Z</div><div class="v" id="t-accz">—</div></div>
+          <div class="metric"><div class="k">Gyro X</div><div class="v" id="t-gyrox">—</div></div>
+          <div class="metric"><div class="k">Gyro Y</div><div class="v" id="t-gyroy">—</div></div>
+          <div class="metric"><div class="k">Gyro Z</div><div class="v" id="t-gyroz">—</div></div>
+          <div class="metric"><div class="k">Mag X</div><div class="v" id="t-magx">—</div></div>
+          <div class="metric"><div class="k">Mag Y</div><div class="v" id="t-magy">—</div></div>
+          <div class="metric"><div class="k">Mag Z</div><div class="v" id="t-magz">—</div></div>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <!-- ═══ CALIBRATE ═══ -->
+  <div class="tab-content" id="tab-calibrate">
+    <section>
+      <h2>Sensors</h2>
+      <div class="grid2">
+        <button class="btn purple" onclick="calib('accelerometer','Place drone flat and still, then OK')">Accel · flat</button>
+        <button class="btn purple" onclick="calib('magnetometer','Rotate drone in figure-8 for 10 s, then OK')">Mag · figure-8</button>
+      </div>
+    </section>
+    <section>
+      <h2>Trim</h2>
+      <div class="slider"><label>Roll</label><input type="range" min="-100" max="100" value="0" id="trim-roll" /><span class="val" id="v-trim-roll">0</span></div>
+      <div class="slider"><label>Pitch</label><input type="range" min="-100" max="100" value="0" id="trim-pitch" /><span class="val" id="v-trim-pitch">0</span></div>
+      <button class="btn primary" onclick="sendTrim()" style="margin-top:10px;">Apply</button>
+    </section>
+  </div>
+
+  <!-- ═══ GAMEPAD SETUP ═══ -->
+  <div class="tab-content" id="tab-gamepad">
+    <section>
+      <h2><span id="gp-name">no device</span> <span class="count" id="gp-counts">—</span></h2>
+      <button class="btn ghost sm" onclick="resetMapping()" style="margin-bottom:14px;">Reset defaults</button>
+      <div id="gp-axes-live"></div>
+    </section>
+
+    <section>
+      <h2>Buttons</h2>
+      <div id="gp-buttons-live" class="gp-btn-grid"></div>
+    </section>
+
+    <section>
+      <h2>Stick channels <span class="count">click Detect, then move stick</span></h2>
+      <div id="axis-config"></div>
+    </section>
+
+    <section>
+      <h2>Actions <span class="count">click Bind, then press button or flick switch</span></h2>
+      <table class="map">
+        <thead><tr><th>Action</th><th style="text-align:right; padding-right:12px;">Bound to</th><th></th></tr></thead>
+        <tbody id="gp-map-body"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- ═══ KEYBOARD SETUP ═══ -->
+  <div class="tab-content" id="tab-keyboard">
+    <section>
+      <h2>Sticks · hold to move</h2>
+      <table class="map">
+        <thead><tr><th>Channel</th><th style="text-align:center;">+ key</th><th style="text-align:center;">– key</th></tr></thead>
+        <tbody id="kb-axis-body"></tbody>
+      </table>
+    </section>
+    <section>
+      <h2>Actions · one shot</h2>
+      <table class="map">
+        <thead><tr><th>Action</th><th style="text-align:right; padding-right:12px;">Key</th><th></th></tr></thead>
+        <tbody id="kb-map-body"></tbody>
+      </table>
+      <button class="btn ghost sm" onclick="resetKbMapping()" style="margin-top:12px;">Reset</button>
+    </section>
+  </div>
+
+  <!-- ═══ LOGS ═══ -->
+  <div class="tab-content" id="tab-logs">
+    <section>
+      <h2>Recording <span class="count" id="log-status">idle</span></h2>
+      <div class="row">
+        <button class="btn good" onclick="post('/api/log/start').then(pollLogs)">Start</button>
+        <button class="btn warn" onclick="post('/api/log/stop').then(pollLogs)">Stop</button>
+        <button class="btn ghost" onclick="pollLogs()">Refresh</button>
+      </div>
+    </section>
+    <section>
+      <h2>Flight files</h2>
+      <table class="map">
+        <thead><tr><th>Name</th><th style="text-align:right;">Size</th><th style="text-align:right;">Modified</th><th></th></tr></thead>
+        <tbody id="log-list"><tr><td colspan="4" class="unmapped">no recordings yet</td></tr></tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- ═══ ADVANCED ═══ -->
+  <div class="tab-content" id="tab-advanced">
+    <section>
+      <h2>PID <span class="count">experimental</span></h2>
+      <table class="map" id="pid-table">
+        <thead><tr><th>Axis</th><th style="text-align:center;">P</th><th style="text-align:center;">I</th><th style="text-align:center;">D</th></tr></thead>
+        <tbody id="pid-body"></tbody>
+      </table>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn" onclick="loadPID()">Reload</button>
+        <button class="btn primary" onclick="savePID()">Apply</button>
+      </div>
+    </section>
+    <section>
+      <h2>Motor test <span class="count" style="color:var(--danger);">⚠ props off</span></h2>
+      <div id="motors"></div>
+    </section>
+  </div>
+
+</main>
+
+<div class="dock">
+  <button class="btn danger" onclick="post('/api/estop')">Emergency Stop · Esc</button>
+</div>
+
+<script>
+// ── Tabs ─────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+  };
+});
+
+// ── Helpers ──────────────────────────────────────────
+const NEUTRAL = 1500;
+function post(url, body) {
+  return fetch(url, { method:'POST', headers:{'Content-Type':'application/json'},
+    body: body ? JSON.stringify(body) : undefined }).then(r=>r.json()).catch(()=>null);
+}
+function setSlider(axis, v) {
+  document.getElementById('s-'+axis).value = v;
+  document.getElementById('v-'+axis).textContent = v;
+}
+function onSlide(axis, v) {
+  document.getElementById('v-'+axis).textContent = v;
+  post('/api/rc', {[axis]: parseInt(v)});
+}
+function resetSliders() { ['roll','pitch','yaw','throttle'].forEach(a => setSlider(a, NEUTRAL)); }
+function calib(which, msg) { if (confirm(msg)) post('/api/calibrate/'+which); }
+function sendTrim() {
+  post('/api/trim', {
+    roll: parseInt(document.getElementById('trim-roll').value),
+    pitch: parseInt(document.getElementById('trim-pitch').value),
+  });
+}
+['trim-roll','trim-pitch'].forEach(id =>
+  document.getElementById(id).oninput = e =>
+    document.getElementById('v-'+id).textContent = e.target.value);
+
+// ── Chips / mode buttons ─────────────────────────────
+function setChip(id, on, label, cls='on') {
+  const c = document.getElementById(id);
+  if (!c) return;
+  c.className = 'chip ' + (on ? cls : '');
+  c.innerHTML = `<span class="dot"></span>${label}`;
+}
+function setToggleBtn(id, on) {
+  const b = document.getElementById(id);
+  b.classList.remove('on', 'off');
+  b.classList.add(on ? 'on' : 'off');
+}
+
+// ── Angle mode ───────────────────────────────────────
+let angleMode = true;
+function updateMode() {
+  angleMode = document.getElementById('auto-center').checked;
+  setChip('c-mode', true, angleMode ? 'angle' : 'rate');
+}
+function recenterIfAngle(axis) {
+  if (!angleMode) return;
+  setSlider(axis, NEUTRAL);
+  post('/api/rc', {[axis]: NEUTRAL});
+}
+
+// ── Dev mode ─────────────────────────────────────────
+let devOn = false;
+function toggleDev() {
+  devOn = !devOn;
+  post(devOn ? '/api/dev/on' : '/api/dev/off');
+  setChip('c-dev', devOn, 'dev ' + (devOn ? 'on' : 'off'));
+  setToggleBtn('b-dev', devOn);
+}
+
+// ── Telemetry ────────────────────────────────────────
+async function pollTele() {
+  try {
+    const r = await fetch('/api/telemetry');
+    const t = await r.json();
+    const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent = v; };
+
+    const dot = document.getElementById('logo-dot');
+    dot.className = 'dot ' + (t.connected ? 'on' : 'off');
+    document.getElementById('status-text').textContent = t.connected ? '192.168.4.1' : 'disconnected';
+
+    setChip('c-armed', !!t.armed, t.armed ? 'armed' : 'disarmed', 'warn');
+
+    const bat = document.getElementById('t-bat');
+    const v = t.battery || 0;
+    bat.textContent = v.toFixed(2) + ' V';
+    bat.parentElement.className = 'metric' + (v && v < 3.5 ? ' danger' : v && v < 3.7 ? ' warn' : '');
+    // INA219 BMS
+    const cur = t.current_ma || 0;
+    set('t-cur', cur + ' mA');
+    document.getElementById('t-cur').parentElement.className = 'metric' + (cur > 3000 ? ' danger' : cur > 2000 ? ' warn' : '');
+    const soc = (t.soc !== undefined && t.soc > 0) ? t.soc : (t.battery_pct || 0);
+    set('t-soc', soc + '%');
+    set('t-drawn', (t.mah_drawn||0) + ' mAh');
+    set('t-remain', (t.mah_remain||0) + ' mAh');
+    set('t-alt',   (t.alt||0).toFixed(2) + ' m');
+    set('t-roll',  (t.roll||0) + '°');
+    set('t-pitch', (t.pitch||0) + '°');
+    set('t-yaw',   (t.yaw||0) + '°');
+    set('t-accx', (t.acc_x||0).toFixed(2)); set('t-accy', (t.acc_y||0).toFixed(2)); set('t-accz', (t.acc_z||0).toFixed(2));
+    set('t-gyrox', (t.gyro_x||0).toFixed(1)); set('t-gyroy', (t.gyro_y||0).toFixed(1)); set('t-gyroz', (t.gyro_z||0).toFixed(1));
+    set('t-magx', (t.mag_x||0).toFixed(0)); set('t-magy', (t.mag_y||0).toFixed(0)); set('t-magz', (t.mag_z||0).toFixed(0));
+    pushGraph('att',  [t.roll||0, t.pitch||0, t.yaw||0]);
+    pushGraph('gyro', [t.gyro_x||0, t.gyro_y||0, t.gyro_z||0]);
+    pushGraph('acc',  [t.acc_x||0, t.acc_y||0, t.acc_z||0]);
+  } catch(e) {}
+}
+setInterval(pollTele, 100);
+
+// ── Services (start/stop shell scripts) ──────────────
+// Connection modes (from /api/network/probe):
+//   'camera' : on camera AP, drone bridged → drone + camera services usable
+//   'drone'  : on drone AP, no camera module → drone only
+//   'none'   : disconnected
+let netMode = 'none';
+const MODE_COPY = {
+  camera: 'on WIFI-1080p-… · camera + drone bridged',
+  drone:  'on Pluto direct AP · no camera module',
+  'camera-only': 'on WIFI-1080p-… · drone bridge not up yet',
+  none:   'no Pluto network · join WIFI-1080p-… (with camera) or the Pluto AP direct',
+};
+async function pollProcs() {
+  try {
+    const [s, n] = await Promise.all([
+      (await fetch('/api/proc/status')).json(),
+      (await fetch('/api/network/probe')).json(),
+    ]);
+    netMode = n.mode;
+    document.getElementById('svc-hint').textContent = MODE_COPY[n.mode] || n.mode;
+
+    // Hide camera service entirely when camera AP isn't reachable — user is
+    // on drone-direct AP and camera isn't part of this flight.
+    const visible = n.mode === 'camera' ? ['drone','camera','vision']
+                   : n.mode === 'drone' ? ['drone']
+                   : n.mode === 'camera-only' ? ['camera']
+                   : ['drone','camera'];
+
+    const row = document.getElementById('svc-row');
+    row.innerHTML = visible.map(k => {
+      const p = s[k];
+      const cls = p.running ? 'good' : 'primary';
+      const lbl = p.running ? 'Stop' : 'Start';
+      return `<button class="btn ${cls}" onclick="toggleProc('${k}', ${p.running})" style="flex:1;">
+                ${p.label} · ${lbl}
+              </button>`;
+    }).join('');
+
+    // Auto-start camera once in camera mode (safe: stream only, no arming).
+    if (n.mode === 'camera' && !s.camera.running && !_cameraAutoStarted) {
+      _cameraAutoStarted = true;
+      fetch('/api/proc/start/camera', {method:'POST'});
+    }
+    if (n.mode !== 'camera') _cameraAutoStarted = false;
+  } catch(e) {}
+}
+let _cameraAutoStarted = false;
+async function toggleProc(name, running) {
+  if (!running && netMode === 'none') {
+    if (!confirm('No Pluto network detected. Start anyway?')) return;
+  }
+  const url = running ? '/api/proc/stop/' + name : '/api/proc/start/' + name;
+  await fetch(url, {method:'POST'});
+  pollProcs();
+}
+async function showLog(name) {
+  const lines = await (await fetch('/api/proc/log/' + name)).json();
+  document.getElementById('svc-log').textContent = lines.length ? lines.join('\n') : '(empty)';
+}
+setInterval(pollProcs, 1500);
+pollProcs();
+
+// ── Camera ───────────────────────────────────────────
+let camOn = false;
+async function pollCamStatus() {
+  try {
+    const s = await (await fetch('/api/camera/status')).json();
+    const el = document.getElementById('cam-status');
+    if (!s.available) { el.textContent = 'cv_bridge missing'; return; }
+    el.textContent = s.streaming ? `${s.frames} frames` : 'waiting for frames';
+    if (!s.streaming && camOn) {
+      document.getElementById('cam-msg').textContent = 'no frames · run start_camera.sh';
+    }
+  } catch(e) {}
+}
+setInterval(pollCamStatus, 1000);
+pollCamStatus();
+
+function toggleCam() {
+  camOn = !camOn;
+  const img = document.getElementById('cam-img');
+  const msg = document.getElementById('cam-msg');
+  const btn = document.getElementById('cam-btn');
+  if (camOn) {
+    img.src = '/api/camera/stream?' + Date.now();
+    img.style.display = 'block';
+    msg.style.display = 'none';
+    btn.textContent = 'Stop';
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    msg.style.display = 'block';
+    btn.textContent = 'Start';
+  }
+}
+function camSnapshot() {
+  window.open('/api/camera/snapshot?' + Date.now(), '_blank');
+}
+
+// ── Graphs ───────────────────────────────────────────
+const GRAPH_WINDOW = 300;
+const graphs = {
+  att:  { canvas:'g-att',  series:[[], [], []], range:[-180, 180] },
+  gyro: { canvas:'g-gyro', series:[[], [], []], range:[-500, 500] },
+  acc:  { canvas:'g-acc',  series:[[], [], []], range:[-2.0, 2.0] },
+};
+const GC = ['#4ade80','#fbbf24','#60a5fa'];
+function pushGraph(key, vals) {
+  const g = graphs[key];
+  for (let i = 0; i < 3; i++) {
+    g.series[i].push(vals[i] ?? 0);
+    if (g.series[i].length > GRAPH_WINDOW) g.series[i].shift();
+  }
+  drawGraph(key);
+}
+function drawGraph(key) {
+  const g = graphs[key];
+  const c = document.getElementById(g.canvas);
+  if (!c) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth || 640, h = c.clientHeight || 96;
+  if (w === 0 || h === 0) return;
+  if (c.width !== w * dpr) { c.width = w*dpr; c.height = h*dpr; }
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
+  const [lo, hi] = g.range; const range = hi - lo;
+  for (let i = 0; i < 3; i++) {
+    const data = g.series[i];
+    if (data.length < 2) continue;
+    ctx.strokeStyle = GC[i]; ctx.lineWidth = 1.4; ctx.beginPath();
+    for (let j = 0; j < data.length; j++) {
+      const x = (j / (GRAPH_WINDOW-1)) * w;
+      const y = h - ((data[j] - lo) / range) * h;
+      j === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+}
+window.addEventListener('resize', () => ['att','gyro','acc'].forEach(drawGraph));
+
+// ── Actions ──────────────────────────────────────────
+const ACTIONS = [
+  {key:'arm',       label:'Arm',              endpoint:'/api/arm'},
+  {key:'disarm',    label:'Disarm',           endpoint:'/api/disarm'},
+  {key:'takeoff',   label:'Take off',         endpoint:'/api/takeoff'},
+  {key:'land',      label:'Land',             endpoint:'/api/land'},
+  {key:'box_arm',   label:'Box arm',          endpoint:'/api/box_arm'},
+  {key:'neutral',   label:'Reset sticks',     endpoint:'/api/neutral'},
+  {key:'estop',     label:'Emergency stop',   endpoint:'/api/estop'},
+  {key:'dev_on',    label:'Dev on',           endpoint:'/api/dev/on'},
+  {key:'dev_off',   label:'Dev off',          endpoint:'/api/dev/off'},
+  {key:'climb',     label:'Climb',            endpoint:'/api/move/up'},
+  {key:'descend',   label:'Descend',          endpoint:'/api/move/down'},
+  {key:'fwd',       label:'Forward',          endpoint:'/api/move/forward'},
+  {key:'back',      label:'Backward',         endpoint:'/api/move/backward'},
+  {key:'mleft',     label:'Left',             endpoint:'/api/move/left'},
+  {key:'mright',    label:'Right',            endpoint:'/api/move/right'},
+  {key:'yawL',      label:'Yaw left',         endpoint:'/api/move/left_yaw'},
+  {key:'yawR',      label:'Yaw right',        endpoint:'/api/move/right_yaw'},
+  {key:'calib_acc', label:'Calibrate accel',  endpoint:'/api/calibrate/accelerometer'},
+  {key:'calib_mag', label:'Calibrate mag',    endpoint:'/api/calibrate/magnetometer'},
+];
+const endpointFor = k => (ACTIONS.find(x=>x.key===k)||{}).endpoint;
+
+// ── Gamepad ──────────────────────────────────────────
+// Action binding value: {t:'b', i:N}  (button N edge)  OR  {t:'a', a:N, p:'lo'|'mid'|'hi'}  (axis N entering position)
+// Legacy: a bare number is treated as {t:'b', i:N}.
+const DEFAULT_GP_MAP = {
+  takeoff:{t:'b',i:0}, land:{t:'b',i:1}, arm:{t:'b',i:2}, disarm:{t:'b',i:3},
+  descend:{t:'b',i:4}, climb:{t:'b',i:5}, estop:{t:'b',i:8}, neutral:{t:'b',i:9},
+  fwd:{t:'b',i:12}, back:{t:'b',i:13}, mleft:{t:'b',i:14}, mright:{t:'b',i:15}
+};
+const DEFAULT_GP_AXES = { roll:{axis:0,invert:false}, pitch:{axis:1,invert:true}, yaw:{axis:2,invert:false}, throttle:{axis:3,invert:true} };
+let gpMap   = JSON.parse(localStorage.getItem('pluto_gp_map')  || 'null') || JSON.parse(JSON.stringify(DEFAULT_GP_MAP));
+let axisCfg = JSON.parse(localStorage.getItem('pluto_gp_axes') || 'null') || JSON.parse(JSON.stringify(DEFAULT_GP_AXES));
+// Migrate legacy bare-number bindings.
+for (const k of Object.keys(gpMap)) if (typeof gpMap[k] === 'number') gpMap[k] = {t:'b', i:gpMap[k]};
+const SWITCH_HI = 0.5, SWITCH_LO = -0.5;
+const axisPos = v => v >  SWITCH_HI ? 'hi' : (v < SWITCH_LO ? 'lo' : 'mid');
+const posLabel = p => ({lo:'low', mid:'mid', hi:'high'}[p] || p);
+function bindLabel(b) {
+  if (!b) return '<span class="unmapped">—</span>';
+  if (b.t === 'b') return 'btn ' + b.i;
+  if (b.t === 'a') return `ax ${b.a} ${posLabel(b.p)}`;
+  return '?';
+}
+let listenGp = null;
+const saveGp = () => { localStorage.setItem('pluto_gp_map', JSON.stringify(gpMap)); localStorage.setItem('pluto_gp_axes', JSON.stringify(axisCfg)); };
+function resetMapping() {
+  if (!confirm('Reset gamepad mapping?')) return;
+  gpMap = {...DEFAULT_GP_MAP};
+  axisCfg = JSON.parse(JSON.stringify(DEFAULT_GP_AXES));
+  saveGp(); buildGpUI();
+}
+// Detect-axis state: when set, next significantly-moved axis binds to this channel.
+let detectAxisFor = null;
+let detectBaseline = null;  // snapshot of axes at detect-start
+
+function buildGpUI() {
+  document.getElementById('gp-map-body').innerHTML = ACTIONS.map(a => {
+    const txt = bindLabel(gpMap[a.key]);
+    return `<tr>
+      <td>${a.label}</td>
+      <td class="code" id="gpcell-${a.key}" style="text-align:right; padding-right:12px;">${txt}</td>
+      <td class="actions">
+        <button class="btn sm ${listenGp===a.key?'listening':''}" id="gpbind-${a.key}" onclick="startBind('${a.key}')">${listenGp===a.key?'press / flick…':'Bind'}</button>
+        <button class="btn sm ghost" onclick="delete gpMap['${a.key}']; saveGp(); buildGpUI()">Clear</button>
+      </td></tr>`;
+  }).join('');
+  document.getElementById('axis-config').innerHTML = ['roll','pitch','yaw','throttle'].map(ch => `
+    <div class="gp-axis-row">
+      <span class="name">${ch}</span>
+      <div class="gp-bar"><div class="center"></div><div class="fill" id="ch-fill-${ch}" style="width:0;"></div></div>
+      <span class="v" id="ch-rc-${ch}">1500</span>
+      <span class="assigned" id="ch-assigned-${ch}">axis ${axisCfg[ch].axis}${axisCfg[ch].invert?' (inv)':''}</span>
+      <div class="row" style="gap:4px;">
+        <button class="btn sm ${detectAxisFor===ch?'listening':''}" id="ch-detect-${ch}" onclick="startDetectAxis('${ch}')">${detectAxisFor===ch?'wiggle…':'Detect'}</button>
+        <button class="btn sm ghost" title="invert" onclick="axisCfg.${ch}.invert=!axisCfg.${ch}.invert; saveGp(); buildGpUI();">⇅</button>
+      </div>
+    </div>`).join('');
+}
+
+let bindAxisBaselinePos = null;  // snapshot of per-axis positions when bind started
+function startBind(actionKey) {
+  detectAxisFor = null;
+  listenGp = actionKey;
+  if (gpIndex === null) { alert('No gamepad connected.'); listenGp = null; return; }
+  const gp = (navigator.getGamepads ? navigator.getGamepads() : [])[gpIndex];
+  bindAxisBaselinePos = gp ? gp.axes.map(v => axisPos(v || 0)) : [];
+  buildGpUI();
+}
+function startDetectAxis(ch) {
+  listenGp = null;
+  detectAxisFor = ch;
+  if (gpIndex === null) { alert('No gamepad connected.'); detectAxisFor = null; return; }
+  const gp = (navigator.getGamepads ? navigator.getGamepads() : [])[gpIndex];
+  detectBaseline = gp ? gp.axes.slice() : [];
+  buildGpUI();
+}
+
+let gpEnabled=false, gpIndex=null;
+const gpPrev={buttons:[]};
+const DEADZONE=0.12;
+const dz = v => Math.abs(v) < DEADZONE ? 0 : v;
+const axisToRC = v => Math.round(NEUTRAL + dz(v) * 500);
+function setGp(on) {
+  gpEnabled = on;
+  setChip('c-gp', on && gpIndex !== null, on ? (gpIndex !== null ? 'gamepad' : 'gamepad …') : 'gamepad off');
+  setToggleBtn('b-gp', on);
+}
+// Mutually exclusive input router: 'none' | 'keys' | 'gp'
+function setInput(mode) {
+  setKeys(mode === 'keys');
+  setGp(mode === 'gp');
+  setToggleBtn('b-none', mode === 'none');
+}
+window.addEventListener('gamepadconnected', e => {
+  gpIndex = e.gamepad.index;
+  document.getElementById('gp-name').textContent = e.gamepad.id.slice(0, 40);
+  if (gpEnabled) setGp(true);
+});
+window.addEventListener('gamepaddisconnected', e => {
+  if (e.gamepad.index === gpIndex) { gpIndex=null; document.getElementById('gp-name').textContent='none'; setGp(gpEnabled); }
+});
+function renderLiveAxes(gp) {
+  const host = document.getElementById('gp-axes-live');
+  if (!host) return;
+  if (!gp) { host.innerHTML = '<p class="hint" style="margin:0;">Connect a gamepad to see axes.</p>'; return; }
+  // Build rows once when axis count changes
+  if (host.children.length !== gp.axes.length) {
+    host.innerHTML = gp.axes.map((_, i) => `
+      <div class="gp-axis-row">
+        <span class="name">ax ${i}</span>
+        <div class="gp-bar"><div class="center"></div><div class="fill" id="gp-ax-fill-${i}" style="width:0;"></div></div>
+        <span class="v" id="gp-ax-val-${i}">0.00</span>
+        <span class="assigned" id="gp-ax-use-${i}"></span>
+        <span></span>
+      </div>`).join('');
+  }
+  const usedBy = {};
+  ['roll','pitch','yaw','throttle'].forEach(ch => {
+    const a = axisCfg[ch].axis;
+    usedBy[a] = (usedBy[a] ? usedBy[a] + ',' : '') + ch + (axisCfg[ch].invert?'⇅':'');
+  });
+  // Append actions bound to axis positions
+  for (const k of Object.keys(gpMap)) {
+    const b = gpMap[k];
+    if (b && b.t === 'a') {
+      const lbl = ((ACTIONS.find(a=>a.key===k)||{}).label || k) + '@' + posLabel(b.p);
+      usedBy[b.a] = (usedBy[b.a] ? usedBy[b.a] + ', ' : '') + lbl;
+    }
+  }
+  for (let i = 0; i < gp.axes.length; i++) {
+    const v = gp.axes[i] || 0;
+    const fill = document.getElementById('gp-ax-fill-' + i);
+    const val  = document.getElementById('gp-ax-val-' + i);
+    const use  = document.getElementById('gp-ax-use-' + i);
+    if (fill) {
+      const pct = Math.min(50, Math.abs(v) * 50);
+      fill.style.width = pct + '%';
+      fill.style.left = v >= 0 ? '50%' : (50 - pct) + '%';
+      fill.classList.toggle('neg', v < 0);
+    }
+    if (val) val.textContent = v.toFixed(2);
+    if (use) use.textContent = usedBy[i] || '';
+  }
+}
+function renderLiveButtons(gp) {
+  const host = document.getElementById('gp-buttons-live');
+  if (!host) return;
+  if (!gp) { host.innerHTML = '<p class="hint" style="margin:0;">Connect a gamepad to see buttons.</p>'; return; }
+  if (host.children.length !== gp.buttons.length) {
+    host.innerHTML = gp.buttons.map((_, i) => {
+      const action = Object.keys(gpMap).find(k => { const b = gpMap[k]; return b && b.t === 'b' && b.i === i; });
+      const lbl = action ? (ACTIONS.find(a=>a.key===action)||{}).label || action : '';
+      return `<div class="gp-btn" id="gp-btn-${i}">${i}<span class="lbl" id="gp-btn-lbl-${i}">${lbl||'·'}</span></div>`;
+    }).join('');
+  }
+  for (let i = 0; i < gp.buttons.length; i++) {
+    const el = document.getElementById('gp-btn-' + i);
+    if (el) el.classList.toggle('pressed', gp.buttons[i].pressed);
+  }
+}
+
+function gpTick() {
+  requestAnimationFrame(gpTick);
+  if (gpIndex === null) {
+    renderLiveAxes(null); renderLiveButtons(null);
+    const c = document.getElementById('gp-counts'); if (c) c.textContent = 'axes: — · buttons: —';
+    return;
+  }
+  const gp = (navigator.getGamepads ? navigator.getGamepads() : [])[gpIndex];
+  if (!gp) return;
+  const c = document.getElementById('gp-counts');
+  if (c) c.textContent = `axes: ${gp.axes.length} · buttons: ${gp.buttons.length}`;
+  renderLiveAxes(gp);
+  renderLiveButtons(gp);
+
+  // Wiggle-detect axis
+  if (detectAxisFor) {
+    let bestI = -1, bestDelta = 0.35;  // require 0.35 movement
+    for (let i = 0; i < gp.axes.length; i++) {
+      const base = (detectBaseline && detectBaseline[i] !== undefined) ? detectBaseline[i] : 0;
+      const d = Math.abs((gp.axes[i] || 0) - base);
+      if (d > bestDelta) { bestDelta = d; bestI = i; }
+    }
+    if (bestI >= 0) {
+      axisCfg[detectAxisFor].axis = bestI;
+      saveGp();
+      detectAxisFor = null; detectBaseline = null;
+      buildGpUI();
+    }
+  }
+  // Bind action: button press OR axis crossing into a new position
+  if (listenGp) {
+    let bound = false;
+    for (let i = 0; i < gp.buttons.length; i++)
+      if (gp.buttons[i].pressed && !gpPrev.buttons[i]) {
+        gpMap[listenGp] = {t:'b', i};
+        bound = true; break;
+      }
+    if (!bound && bindAxisBaselinePos) {
+      for (let i = 0; i < gp.axes.length; i++) {
+        const cur = axisPos(gp.axes[i] || 0);
+        const base = bindAxisBaselinePos[i] || 'mid';
+        if (cur !== base && cur !== 'mid') {  // require landing on lo/hi (avoid mid passthrough)
+          gpMap[listenGp] = {t:'a', a:i, p:cur};
+          bound = true; break;
+        }
+      }
+    }
+    if (bound) { saveGp(); listenGp = null; bindAxisBaselinePos = null; buildGpUI(); }
+    gpPrev.buttons = gp.buttons.map(b => b.pressed);
+    if (!gpPrev.axisPos) gpPrev.axisPos = gp.axes.map(v => axisPos(v||0));
+    else gpPrev.axisPos = gp.axes.map(v => axisPos(v||0));
+    return;
+  }
+
+  if (!gpEnabled) { gpPrev.buttons = gp.buttons.map(b => b.pressed); return; }
+  const ch = {};
+  ['roll','pitch','yaw','throttle'].forEach(name => {
+    const cfg = axisCfg[name];
+    let v = gp.axes[cfg.axis] ?? 0;
+    if (cfg.invert) v = -v;
+    ch[name] = axisToRC(v);
+    const fill = document.getElementById('ch-fill-' + name);
+    const rc   = document.getElementById('ch-rc-' + name);
+    if (fill) {
+      const dv = dz(v);
+      const pct = Math.min(50, Math.abs(dv) * 50);
+      fill.style.width = pct + '%';
+      fill.style.left = dv >= 0 ? '50%' : (50 - pct) + '%';
+      fill.classList.toggle('neg', dv < 0);
+    }
+    if (rc) rc.textContent = ch[name];
+  });
+  ['roll','pitch','yaw','throttle'].forEach(a => setSlider(a, ch[a]));
+  post('/api/rc', ch);
+  for (let i = 0; i < gp.buttons.length; i++)
+    if (gp.buttons[i].pressed && !gpPrev.buttons[i]) {
+      const k = Object.keys(gpMap).find(k => { const b = gpMap[k]; return b && b.t === 'b' && b.i === i; });
+      if (k) { const ep = endpointFor(k); if (ep) post(ep); }
+    }
+  gpPrev.buttons = gp.buttons.map(b => b.pressed);
+  // Axis-position edges (3-pos / 2-pos switches on real RC TXs)
+  const curPos = gp.axes.map(v => axisPos(v || 0));
+  if (gpPrev.axisPos) {
+    for (let i = 0; i < curPos.length; i++) {
+      if (curPos[i] === gpPrev.axisPos[i]) continue;
+      const k = Object.keys(gpMap).find(k => { const b = gpMap[k]; return b && b.t === 'a' && b.a === i && b.p === curPos[i]; });
+      if (k) { const ep = endpointFor(k); if (ep) post(ep); }
+    }
+  }
+  gpPrev.axisPos = curPos;
+}
+requestAnimationFrame(gpTick);
+buildGpUI();
+
+// ── Keyboard ─────────────────────────────────────────
+const DEFAULT_KB_AXIS = {
+  roll:{plus:'d', minus:'a'}, pitch:{plus:'w', minus:'s'},
+  yaw:{plus:'e', minus:'q'},  throttle:{plus:'r', minus:'f'},
+};
+const DEFAULT_KB_MAP = {
+  takeoff:'t', land:'l', arm:'1', disarm:'2', neutral:' ', estop:'Escape',
+  fwd:'ArrowUp', back:'ArrowDown', mleft:'ArrowLeft', mright:'ArrowRight',
+  climb:'PageUp', descend:'PageDown', yawL:'z', yawR:'c',
+  box_arm:'b', dev_on:'9', dev_off:'0', calib_acc:'k', calib_mag:'m',
+};
+let kbAxis = JSON.parse(localStorage.getItem('pluto_kb_axis') || 'null') || JSON.parse(JSON.stringify(DEFAULT_KB_AXIS));
+let kbMap  = JSON.parse(localStorage.getItem('pluto_kb_map')  || 'null') || {...DEFAULT_KB_MAP};
+let listenKb = null, listenKbAxis = null;
+const saveKb = () => { localStorage.setItem('pluto_kb_axis', JSON.stringify(kbAxis)); localStorage.setItem('pluto_kb_map', JSON.stringify(kbMap)); };
+function resetKbMapping() {
+  if (!confirm('Reset keyboard mapping?')) return;
+  kbAxis = JSON.parse(JSON.stringify(DEFAULT_KB_AXIS));
+  kbMap = {...DEFAULT_KB_MAP};
+  saveKb(); buildKbUI();
+}
+const pretty = k => k === ' ' ? 'Space' : k;
+function buildKbUI() {
+  document.getElementById('kb-axis-body').innerHTML = ['roll','pitch','yaw','throttle'].map(ch => `
+    <tr>
+      <td>${ch}</td>
+      <td class="code" style="text-align:center;" id="kbax-${ch}-plus">${pretty(kbAxis[ch].plus)}
+        <button class="btn sm ghost" style="margin-left:6px;" onclick="listenKbAxis='${ch}-plus'; document.getElementById('kbax-${ch}-plus').innerHTML='<span class=listen>press…</span>'">↻</button>
+      </td>
+      <td class="code" style="text-align:center;" id="kbax-${ch}-minus">${pretty(kbAxis[ch].minus)}
+        <button class="btn sm ghost" style="margin-left:6px;" onclick="listenKbAxis='${ch}-minus'; document.getElementById('kbax-${ch}-minus').innerHTML='<span class=listen>press…</span>'">↻</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('kb-map-body').innerHTML = ACTIONS.map(a => {
+    const k = kbMap[a.key];
+    const txt = k ? pretty(k) : '<span class="unmapped">—</span>';
+    return `<tr>
+      <td>${a.label}</td>
+      <td class="code" id="kbcell-${a.key}" style="text-align:right; padding-right:12px;">${txt}</td>
+      <td class="actions">
+        <button class="btn sm" onclick="listenKb='${a.key}'; document.getElementById('kbcell-${a.key}').innerHTML='<span class=listen>press…</span>'">Assign</button>
+        <button class="btn sm ghost" onclick="delete kbMap['${a.key}']; saveKb(); buildKbUI()">Clear</button>
+      </td></tr>`;
+  }).join('');
+}
+
+let keysEnabled = false;
+function setKeys(on) {
+  keysEnabled = on;
+  setChip('c-keys', on, 'keyboard ' + (on ? 'on' : 'off'));
+  setToggleBtn('b-keys', on);
+}
+
+// Hold-to-ramp: each tick, channels with a held direction move toward the
+// limit at `sensitivity` RC units/sec; in angle mode, untouched channels
+// spring back to NEUTRAL at the same rate.
+let sensitivity = parseInt(localStorage.getItem('pluto_kb_sens') || '600');
+function setSens(v) {
+  sensitivity = parseInt(v);
+  document.getElementById('v-sens').textContent = sensitivity + ' /s';
+  localStorage.setItem('pluto_kb_sens', String(sensitivity));
+}
+setSens(sensitivity);
+document.getElementById('s-sens').value = sensitivity;
+
+const heldKeys = new Set();
+const heldDir = { roll:0, pitch:0, yaw:0, throttle:0 };  // -1, 0, +1
+const heldRC  = { roll:NEUTRAL, pitch:NEUTRAL, yaw:NEUTRAL, throttle:NEUTRAL };
+const keyForChar = ev => ev.key.length === 1 ? ev.key.toLowerCase() : ev.key;
+
+document.addEventListener('keydown', ev => {
+  if (listenKb)     { ev.preventDefault(); kbMap[listenKb] = keyForChar(ev); saveKb(); listenKb = null; buildKbUI(); return; }
+  if (listenKbAxis) { ev.preventDefault(); const [ch, sign] = listenKbAxis.split('-'); kbAxis[ch][sign] = keyForChar(ev); saveKb(); listenKbAxis = null; buildKbUI(); return; }
+  if (ev.key === 'Escape') { post('/api/estop'); return; }
+  if (!keysEnabled) return;
+  const k = keyForChar(ev);
+  if (heldKeys.has(k)) { ev.preventDefault(); return; }
+  heldKeys.add(k);
+  let stickHandled = false;
+  for (const ch of ['roll','pitch','yaw','throttle']) {
+    if (kbAxis[ch].plus === k)  { heldDir[ch] = +1; stickHandled = true; }
+    if (kbAxis[ch].minus === k) { heldDir[ch] = -1; stickHandled = true; }
+  }
+  if (stickHandled) { ev.preventDefault(); return; }
+  const action = Object.keys(kbMap).find(a => kbMap[a] === k);
+  if (action) { const ep = endpointFor(action); if (ep) { post(ep); ev.preventDefault(); } }
+});
+
+document.addEventListener('keyup', ev => {
+  const k = keyForChar(ev);
+  heldKeys.delete(k);
+  for (const ch of ['roll','pitch','yaw','throttle']) {
+    if ((kbAxis[ch].plus === k && heldDir[ch] > 0) ||
+        (kbAxis[ch].minus === k && heldDir[ch] < 0)) heldDir[ch] = 0;
+  }
+});
+
+let _lastTick = performance.now();
+function rampTick(now) {
+  requestAnimationFrame(rampTick);
+  const dt = Math.min(0.1, (now - _lastTick) / 1000);
+  _lastTick = now;
+  if (!keysEnabled) return;
+  let changed = false;
+  for (const ch of ['roll','pitch','yaw','throttle']) {
+    const target = heldDir[ch] > 0 ? 2000 : (heldDir[ch] < 0 ? 1000 : (angleMode ? NEUTRAL : heldRC[ch]));
+    if (heldRC[ch] === target) continue;
+    const step = sensitivity * dt;
+    heldRC[ch] = target > heldRC[ch]
+      ? Math.min(target, heldRC[ch] + step)
+      : Math.max(target, heldRC[ch] - step);
+    heldRC[ch] = Math.round(heldRC[ch]);
+    setSlider(ch, heldRC[ch]);
+    changed = true;
+  }
+  if (changed) post('/api/rc', heldRC);
+}
+requestAnimationFrame(rampTick);
+
+buildKbUI();
+
+// ── Logs ─────────────────────────────────────────────
+function humanSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/1024/1024).toFixed(1) + ' MB';
+}
+async function pollLogs() {
+  try {
+    const t = await (await fetch('/api/telemetry')).json();
+    const lbl = document.getElementById('log-status');
+    if (lbl) lbl.textContent = t.logging ? `recording · ${t.log_rows} rows · ${t.log_file}` : 'idle';
+    const r = await (await fetch('/api/log/list')).json();
+    const tb = document.getElementById('log-list');
+    if (!tb) return;
+    if (!r.length) { tb.innerHTML = '<tr><td colspan="4" class="unmapped">no recordings yet</td></tr>'; return; }
+    tb.innerHTML = r.map(f => `
+      <tr>
+        <td class="code">${f.name}</td>
+        <td style="text-align:right;">${humanSize(f.size)}</td>
+        <td style="text-align:right; color:var(--muted); font-size:11.5px;">${new Date(f.modified*1000).toLocaleString()}</td>
+        <td class="actions"><a href="/logs/${f.name}" download><button class="btn sm">Download</button></a></td>
+      </tr>`).join('');
+  } catch(e) {}
+}
+pollLogs();
+setInterval(pollLogs, 3000);
+
+// ── PID ──────────────────────────────────────────────
+async function loadPID() {
+  const r = await fetch('/api/pid');
+  const s = await r.json();
+  document.getElementById('pid-body').innerHTML = ['roll','pitch','yaw'].map(axis => `
+    <tr>
+      <td>${axis}</td>
+      <td style="text-align:center;"><input class="pid-input" type="number" id="pid-${axis}-p" value="${s[axis].p}"></td>
+      <td style="text-align:center;"><input class="pid-input" type="number" id="pid-${axis}-i" value="${s[axis].i}"></td>
+      <td style="text-align:center;"><input class="pid-input" type="number" id="pid-${axis}-d" value="${s[axis].d}"></td>
+    </tr>`).join('');
+}
+async function savePID() {
+  const body = {};
+  for (const axis of ['roll','pitch','yaw']) {
+    body[axis] = {
+      p: parseInt(document.getElementById(`pid-${axis}-p`).value),
+      i: parseInt(document.getElementById(`pid-${axis}-i`).value),
+      d: parseInt(document.getElementById(`pid-${axis}-d`).value),
+    };
+  }
+  const r = await post('/api/pid', body);
+  alert(r?.note || 'saved');
+}
+loadPID();
+
+// ── Motors ───────────────────────────────────────────
+const motors = document.getElementById('motors');
+[0,1,2,3].forEach(i => {
+  const div = document.createElement('div');
+  div.className = 'slider';
+  div.style.gridTemplateColumns = '70px 1fr 52px 70px';
+  div.innerHTML = `
+    <label>M${i}</label>
+    <input type="range" min="1000" max="1500" value="1000" id="m${i}" />
+    <span class="val" id="v-m${i}">1000</span>
+    <button class="btn sm" onclick="motor(${i})">Test</button>`;
+  motors.appendChild(div);
+  document.getElementById('m'+i).oninput = e =>
+    document.getElementById('v-m'+i).textContent = e.target.value;
+});
+function motor(idx) {
+  const speed = parseInt(document.getElementById('m'+idx).value);
+  if (!confirm(`Spin M${idx} at ${speed}? Props off?`)) return;
+  post('/api/motor', {index:idx, speed:speed});
+}
+
+// ── Init ─────────────────────────────────────────────
+updateMode();
+setInput('none');
+
+// ── CrazyRadio PA ─────────────────────────────────────────────────
+let radioMode = 'wifi';   // 'wifi' | 'radio'
+let radioConnected = false;
+
+function setRadioMode(mode) {
+  radioMode = mode;
+  document.getElementById('rb-wifi').classList.toggle('on', mode === 'wifi');
+  document.getElementById('rb-radio').classList.toggle('on', mode === 'radio');
+  document.getElementById('radio-config').style.display = mode === 'radio' ? 'block' : 'none';
+  if (mode === 'wifi') {
+    setRadioBadge(false, 'WiFi (default)');
+  } else {
+    setRadioBadge(false, 'CrazyRadio PA · idle');
+  }
+}
+
+function setRadioBadge(connected, label) {
+  const el = document.getElementById('radio-badge');
+  el.textContent = '';
+  const dot = document.createElement('span');
+  dot.style.cssText = 'width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;margin-right:5px;';
+  el.appendChild(dot);
+  el.appendChild(document.createTextNode(label));
+  el.className = 'radio-badge ' + (connected ? 'connected' : 'idle');
+  radioConnected = connected;
+  document.getElementById('radio-connect-btn').style.display = connected ? 'none' : 'inline-flex';
+  document.getElementById('radio-disconnect-btn').style.display = connected ? 'inline-flex' : 'none';
+}
+
+async function radioConnect() {
+  const channel  = parseInt(document.getElementById('ri-channel').value) || 80;
+  const address  = document.getElementById('ri-address').value.trim() || 'E7E7E7E7E7';
+  const datarate = document.getElementById('ri-datarate').value;
+  document.getElementById('radio-msg').textContent = 'Connecting…';
+  try {
+    const r = await fetch('/api/radio/connect', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ channel, address, datarate })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      setRadioBadge(true, `CrazyRadio · CH${channel} · ${address}`);
+      document.getElementById('radio-msg').textContent = 'Connected ✓';
+    } else {
+      document.getElementById('radio-msg').textContent = 'Error: ' + (j.error || 'unknown');
+    }
+  } catch(e) {
+    document.getElementById('radio-msg').textContent = 'Request failed: ' + e;
+  }
+}
+
+async function radioDisconnect() {
+  await fetch('/api/radio/disconnect', { method: 'POST' });
+  setRadioBadge(false, 'CrazyRadio PA · idle');
+  document.getElementById('radio-msg').textContent = 'Disconnected.';
+}
+
+// Initialise toggle state
+setRadioMode('wifi');
+
+
+// ── PID Altitude Hold ──────────────────────────────────────────────
+let pidEnabled = false;
+let pidPollTimer = null;
+
+function pidEnable() {
+  const target = parseFloat(document.getElementById('pid-target').value) || 1.0;
+  fetch('/api/pid/enable', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ target_alt: target })
+  }).then(r => r.json()).then(j => {
+    if (j.ok) {
+      pidEnabled = true;
+      document.getElementById('pid-enable-btn').style.display  = 'none';
+      document.getElementById('pid-disable-btn').style.display = 'inline-flex';
+      document.getElementById('pid-live').style.display = 'block';
+      document.getElementById('pid-badge').className = 'radio-badge connected';
+      document.getElementById('pid-badge').innerHTML =
+        '<span style="width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;margin-right:5px;"></span>Active';
+      document.getElementById('pid-msg').textContent = 'Altitude hold active ✓';
+      pidStartPolling();
+    } else {
+      document.getElementById('pid-msg').textContent = 'Error: ' + (j.error || 'unknown');
+    }
+  }).catch(e => { document.getElementById('pid-msg').textContent = 'Failed: ' + e; });
+}
+
+function pidDisable() {
+  fetch('/api/pid/disable', { method: 'POST' }).then(() => {
+    pidEnabled = false;
+    document.getElementById('pid-enable-btn').style.display  = 'inline-flex';
+    document.getElementById('pid-disable-btn').style.display = 'none';
+    document.getElementById('pid-badge').className = 'radio-badge idle';
+    document.getElementById('pid-badge').innerHTML =
+      '<span style="width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;margin-right:5px;"></span>Disabled';
+    document.getElementById('pid-msg').textContent = 'Altitude hold disabled.';
+    pidStopPolling();
+  });
+}
+
+function pidUpdateTarget(val) {
+  if (!pidEnabled) return;
+  fetch('/api/pid/target', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ target_alt: parseFloat(val) })
+  });
+}
+
+function pidSendGains() {
+  const kp = parseFloat(document.getElementById('pid-kp').value);
+  const ki = parseFloat(document.getElementById('pid-ki').value);
+  const kd = parseFloat(document.getElementById('pid-kd').value);
+  fetch('/api/pid/gains', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ kp, ki, kd })
+  }).then(r => r.json()).then(j => {
+    document.getElementById('pid-gains-msg').textContent =
+      j.ok ? `Applied: Kp=${kp} Ki=${ki} Kd=${kd}` : 'Error: ' + j.error;
+  });
+}
+
+function pidStartPolling() {
+  if (pidPollTimer) return;
+  pidPollTimer = setInterval(pidPollState, 200);
+}
+
+function pidStopPolling() {
+  if (pidPollTimer) { clearInterval(pidPollTimer); pidPollTimer = null; }
+}
+
+async function pidPollState() {
+  try {
+    const r = await fetch('/api/pid/state');
+    const s = await r.json();
+    document.getElementById('pl-target').textContent  = s.target_alt.toFixed(2)  + ' m';
+    document.getElementById('pl-current').textContent = s.current_alt.toFixed(2) + ' m';
+    document.getElementById('pl-error').textContent   = s.error.toFixed(3)       + ' m';
+    document.getElementById('pl-roll').textContent    = s.roll_deg.toFixed(1)    + '°';
+    document.getElementById('pl-pitch').textContent   = s.pitch_deg.toFixed(1)   + '°';
+    // Sync gains display
+    document.getElementById('pid-kp').value = s.kp;
+    document.getElementById('pid-ki').value = s.ki;
+    document.getElementById('pid-kd').value = s.kd;
+  } catch(e) {}
+}
+
+</script>
+</body>
+</html>

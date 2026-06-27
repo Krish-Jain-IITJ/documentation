@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pluto ROS2 Documentation</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-dark: #000000;
+      --sidebar-bg: #000000;
+      --sidebar-hover: #1a1a1a;
+      --sidebar-active: #ffffff;
+      --sidebar-active-bg: #333333;
+      --accent: #ffffff;
+      --accent2: #cccccc;
+      --text-main: #ffffff;
+      --text-muted: #888888;
+      --content-bg: #ffffff;
+      --content-text: #000000;
+      --content-heading: #000000;
+      --border: #333333;
+      --code-bg: #0a0a0a;
+      --code-text: #f0f0f0;
+      --link: #000000;
+      --top-bar: #000000;
+      --header-blue: #02163a; /* Royal Dark Blue */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* TOP BAR */
+    .top-bar {
+      background: var(--top-bar);
+      height: 54px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 14px;
+      border-bottom: 1px solid #2a2a2a;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .top-bar .home-icon {
+      color: #ffffff;
+      font-size: 18px;
+      text-decoration: none;
+    }
+    .top-bar .title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.3px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 260px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+      perspective: 1000px;
+    }
+
+    .sidebar-logo {
+      padding: 18px 16px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #0a0a0a;
+      perspective: 800px;
+    }
+    .sidebar-logo img {
+      width: 100%;
+      height: auto;
+      max-height: 70px;
+      object-fit: contain;
+      display: block;
+      border-radius: 6px;
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .sidebar-logo:hover img {
+      transform: rotateY(15deg) rotateX(5deg) scale(1.05);
+    }
+
+    .sidebar-search {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-search input {
+      width: 100%;
+      background: #fefdfd;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 7px 12px;
+      color: #000000;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      outline: none;
+    }
+.sidebar-search input::placeholder { color: #000000; }
+    .sidebar-search input:focus { border-color: #888; }
+
+    .nav-section { padding: 8px 0; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #aaaaaa;
+      transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+      border-left: 3px solid transparent;
+      user-select: none;
+      transform-style: preserve-3d;
+    }
+    .nav-item:hover {
+      background: var(--sidebar-hover);
+      color: #fff;
+      transform: translateX(8px) translateZ(20px);
+    }
+    .nav-item.active {
+      background: var(--sidebar-active-bg);
+      color: #ffffff;
+      border-left-color: #ffffff;
+      font-weight: 700;
+    }
+    .nav-item .nav-icon {
+      font-size: 13px;
+      color: #888888;
+      width: 16px;
+      text-align: center;
+    }
+    .nav-item.active .nav-icon { color: #ffffff; }
+
+    .nav-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 10px 18px 4px;
+    }
+
+    /* CONTENT AREA */
+    .content-area {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @keyframes pageIn3D {
+      0% {
+        opacity: 0;
+        transform: perspective(1200px) rotateX(15deg) translateY(30px) translateZ(-50px);
+      }
+      100% {
+        opacity: 1;
+        transform: perspective(1200px) rotateX(0deg) translateY(0) translateZ(0);
+      }
+    }
+
+    .page {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      background: var(--content-bg);
+      color: var(--content-text);
+      padding: 40px 52px 60px;
+      font-family: 'Syne', sans-serif;
+      transform-origin: top center;
+    }
+    .page.active { 
+      display: block; 
+      animation: pageIn3D 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    .page h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--content-heading);
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+    .page h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--content-heading);
+      margin: 32px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #cccccc;
+    }
+    .page h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #222222;
+      margin: 20px 0 8px;
+    }
+    .page p {
+      font-size: 14.5px;
+      line-height: 1.75;
+      color: #3c3c3c;
+      margin-bottom: 14px;
+    }
+    .page ul, .page ol {
+      padding-left: 22px;
+      margin-bottom: 14px;
+    }
+    .page li {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #3c3c3c;
+      margin-bottom: 4px;
+    }
+    .page a {
+      color: #111111;
+      text-decoration: underline;
+    }
+    .page a:hover { color: #000; }
+
+    .page-header-bar {
+      background: var(--header-blue);
+      color: #ffffff;
+      padding: 24px 52px;
+      border-bottom: 4px solid #000000;
+      flex-shrink: 0;
+      margin: -40px -52px 32px;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .page-header-bar h1 {
+      color: #ffffff !important;
+      font-size: 28px !important;
+      margin: 0 !important;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .page-header-bar p {
+      color: #ffffff !important;
+      margin: 8px 0 0 !important;
+      font-size: 14px !important;
+      opacity: 1 !important;
+    }
+
+    /* List Markers */
+    .page ul li { list-style-type: none; position: relative; }
+    .page ul li::before {
+      content: "■";
+      color: #ff3333; /* Red markers */
+      position: absolute;
+      left: -20px;
+      font-size: 12px;
+    }
+    .page ol li::marker {
+      color: #0066ff; /* Blue numbers */
+      font-weight: bold;
+    }
+
+    /* Syntax Highlighting */
+    .sh-kw { color: #ff79c6; font-weight: bold; } /* Keyword/Sudo */
+    .sh-bin { color: #50fa7b; } /* Binary/Command */
+    .sh-arg { color: #8be9fd; } /* Argument/Path */
+    .sh-str { color: #f1fa8c; } /* String */
+    .sh-cmt { color: #6272a4; font-style: italic; } /* Comment */
+
+    code, .code-inline {
+      font-family: 'JetBrains Mono', monospace;
+      background: #e0e0e0;
+      color: #111111;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 12.5px;
+    }
+
+    .code-block {
+      background: var(--code-bg);
+      color: #cccccc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      border-radius: 8px;
+      padding: 18px 22px;
+      margin: 14px 0 20px;
+      overflow-x: auto;
+      line-height: 1.7;
+      border-left: 3px solid #ffffff;
+    }
+    .code-block .comment { color: #555555; }
+    .code-block .cmd { color: #cccccc; }
+
+    .step-block {
+      background: #ffffff;
+      border: 1px solid #dddddd;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin: 16px 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    }
+    .step-block:hover {
+      transform: translateY(-5px) scale(1.01);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: #111111;
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      border-radius: 50%;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--content-heading);
+      margin-bottom: 10px;
+    }
+
+    .info-box {
+      background: #eeeeee;
+      border-left: 4px solid #333333;
+      border-radius: 6px;
+      padding: 12px 18px;
+      font-size: 13.5px;
+      color: #222222;
+      margin: 14px 0;
+    }
+    .warn-box {
+      background: #f0f0f0;
+      border-left: 4px solid #555555;
+      border-radius: 6px;
+      padding: 12px 18px;
+      font-size: 13.5px;
+      color: #333333;
+      margin: 14px 0;
+    }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin: 20px 0;
+      perspective: 1000px;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #dddddd;
+      border-radius: 12px;
+      padding: 22px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+      transform-style: preserve-3d;
+    }
+    .card:hover { 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15), 0 5px 15px rgba(0,0,0,0.1); 
+      transform: translateY(-8px) rotateX(6deg) rotateY(-4deg) scale(1.02);
+    }
+    .card-icon { font-size: 26px; margin-bottom: 10px; }
+    .card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111111;
+      margin-bottom: 6px;
+    }
+    .card p {
+      font-size: 13px;
+      color: #666666;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* Terminal */
+    .terminal {
+      background: #0a0a0a;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 14px 0 20px;
+      border: 1px solid #2a2a2a;
+    }
+    .terminal-bar {
+      background: #151515;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .copy-btn {
+      background: #333;
+      color: #aaa;
+      border: 1px solid #444;
+      padding: 2px 8px;
+      font-size: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: auto;
+      font-family: 'Inter', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { 
+      background: #444; 
+      color: #fff;
+    }
+    .copy-btn.copied {
+      background: #0066ff;
+      color: #fff;
+      border-color: #0066ff;
+    }
+    .t-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .t-red { background: #555; }
+    .t-yellow { background: #777; }
+    .t-green { background: #999; }
+    .terminal-label {
+      font-size: 11px;
+      color: #666;
+      font-family: 'JetBrains Mono', monospace;
+      margin-left: 8px;
+    }
+    .terminal-body {
+      padding: 16px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #cccccc;
+    }
+    .terminal-body .prompt { color: #aaaaaa; }
+    .terminal-body .cmd-text { color: #ffffff; }
+    .terminal-body .output { color: #666666; }
+    .terminal-body .success { color: #aaaaaa; }
+
+    /* scrollbar */
+    .page::-webkit-scrollbar { width: 6px; }
+    .page::-webkit-scrollbar-track { background: #e8e8e8; }
+    .page::-webkit-scrollbar-thumb { background: #aaaaaa; border-radius: 3px; }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: var(--sidebar-bg); }
+    .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+    .badge {
+      display: inline-block;
+      background: #e0e0e0;
+      color: #444444;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 850px) {
+      body { height: auto; overflow: auto; }
+      .layout { flex-direction: column; }
+      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); height: auto; display: flex; flex-direction: column; }
+      .sidebar-logo { padding: 15px; }
+      
+      .nav-section { display: flex; flex-wrap: wrap; justify-content: center; padding: 10px; gap: 5px; }
+      .nav-label, .nav-divider, .sidebar-search { display: none; }
+      .nav-item { padding: 8px 12px; border-radius: 6px; border-left: none; font-size: 12px; background: #111; }
+      .nav-item.active { border-bottom: 2px solid #fff; background: var(--sidebar-active-bg); }
+      .nav-item:hover { transform: none; }
+
+      .content-area { height: auto; overflow: visible; }
+      .page { padding: 20px 20px 40px; display: none; transform-origin: center; } 
+      .page.active { display: block; animation: none; }
+      .page-header-bar { padding: 20px; margin: -20px -20px 32px; text-align: center; }
+      .page-header-bar h1 { font-size: 22px !important; }
+      
+      .card-grid { grid-template-columns: 1fr; }
+      
+      .terminal-bar { flex-wrap: wrap; }
+      .copy-btn { width: 100%; text-align: center; padding: 6px; margin-top: 5px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <!-- <span class="home-icon">⌂</span> -->
+  <span class="title">Pluto ROS2 Documentation</span>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img src="logo.jpg" alt="Drona Aviation / Pluto Logo" />
+    </div>
+
+    <div class="sidebar-search">
+      <input type="text" placeholder="Search docs" id="search-input" oninput="filterNav(this.value)"/>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" data-page="about" onclick="showPage('about', this)">
+        <span class="nav-icon" style="color: #00008b;">▶</span> About Us
+      </div>
+
+      <div class="nav-divider"></div>
+      <div class="nav-label">Getting Started</div>
+      <div class="nav-item" data-page="installation" onclick="showPage('installation', this)">
+        <span class="nav-icon" style="color: #00008b;">▶</span> Installation
+      </div>
+      <div class="nav-item" data-page="setup" onclick="showPage('setup', this)">
+        <span class="nav-icon" style="color: #00008b;">▶</span> Setup
+      </div>
+      <div class="nav-item" data-page="dashboard" onclick="showPage('dashboard', this)">
+        <span class="nav-icon" style="color: #00008b;">▶</span> Dashboard
+      </div>
+      <div class="nav-item" data-page="simulate" onclick="showPage('simulate', this)">
+        <span class="nav-icon" style="color: #00008b;">▶</span> Simulate
+      </div>
+      <div class="nav-item" data-page="launch" onclick="showPage('launch', this)">
+        <span class="nav-icon" style="color: #00008b;">▶</span> Launch
+      </div>
+
+      <div class="nav-divider"></div>
+      <!-- <div class="nav-label">More</div>
+      <div class="nav-item" style="opacity:0.4; pointer-events:none;">
+        <span class="nav-icon" style="color: #00008b;">▶</span> Tutorials <span class="badge">Soon</span>
+      </div>
+      <div class="nav-item" style="opacity:0.4; pointer-events:none;">
+        <span class="nav-icon" style="color: #00008b;">▶</span> How-to Guides <span class="badge">Soon</span>
+      </div>
+      <div class="nav-item" style="opacity:0.4; pointer-events:none;">
+        <span class="nav-icon" style="color: #00008b;">▶</span> Concepts <span class="badge">Soon</span>
+      </div>
+      <div class="nav-item" style="opacity:0.4; pointer-events:none;">
+        <span class="nav-icon" style="color: #00008b;">▶</span> Contact <span class="badge">Soon</span>
+      </div> -->
+    </div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div class="content-area">
+
+    <!-- PAGE: ABOUT -->
+    <div class="page active" id="page-about">
+      <div class="page-header-bar">
+        <h1>About Us</h1>
+        <p>Drona Aviation — building accessible, programmable nano-drones for education and research</p>
+      </div>
+
+      <h2>Who We Are</h2>
+      <p>Drona Aviation is an Indian deep-tech startup dedicated to making aerial robotics accessible to everyone. Our flagship product, the <strong>Pluto</strong> drone, is a palm-sized, programmable nano-drone designed for students, educators, researchers, and hobbyists who want to learn about drone technology, autonomous systems, and robotics — all from a safe, affordable platform.</p>
+      <p>We believe that the best way to learn robotics is to build and fly real hardware. Pluto bridges the gap between simulation and real-world robotics, giving you a physical drone you can program, crash, and learn from — without breaking the bank.</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <h3>Pluto Nano-Drone</h3>
+          <p>A compact, sturdy nano-drone built for indoor and outdoor experimentation. Weighs under 50g and fits in the palm of your hand.</p>
+        </div>
+        <div class="card">
+          <h3>Fully Programmable</h3>
+          <p>Control Pluto using Python, C++, ROS2, or Drona Aviation's own SDK. Full access to flight commands, sensors, and telemetry data.</p>
+        </div>
+        <div class="card">
+          <h3>Built for Education</h3>
+          <p>Used in universities, coding bootcamps, and research labs across India and beyond. A safe, repeatable platform for drone and AI experiments.</p>
+        </div>
+        <div class="card">
+          <h3>ROS2 Integration</h3>
+          <p>Native ROS2 support (Foxy and later) lets you leverage the full robotics ecosystem — simulation, navigation, sensor fusion, and more.</p>
+        </div>
+      </div>
+
+      <h2>The Pluto Drone</h2>
+      <p>Pluto is Drona Aviation's flagship nano-drone platform. It is designed from the ground up for programmability and learning:</p>
+      <ul>
+        <li><strong>Microcontroller:</strong> STM32-based flight controller running Drona Aviation's custom firmware (Magis).</li>
+        <li><strong>Communication:</strong> Connects to your laptop or phone over Wi-Fi (acts as a Wi-Fi access point).</li>
+        <li><strong>Sensors:</strong> On-board IMU, barometer, and optional range sensors for stable indoor flight.</li>
+        <li><strong>Weight &amp; Size:</strong> Ultra-compact nano form factor — safe for indoor use and beginners.</li>
+        <li><strong>SDK &amp; API:</strong> Open SDK with support for C, Python, and ROS/ROS2 packages.</li>
+      </ul>
+
+      <h2>ROS2 &amp; Pluto</h2>
+      <p>This documentation focuses on controlling Pluto using <strong>ROS2</strong> (Robot Operating System 2). ROS2 is the industry-standard framework for writing robot software, offering a rich ecosystem of tools for communication, simulation, navigation, and autonomy.</p>
+      <p>By combining Pluto with ROS2, you can:</p>
+      <ul>
+        <li>Send flight commands (throttle, roll, pitch, yaw) via ROS2 topics and services</li>
+        <li>Read real-time telemetry data from the drone into your ROS2 nodes</li>
+        <li>Build autonomous behaviours using ROS2's navigation and planning stack</li>
+        <li>Test algorithms in Gazebo simulation before deploying on real hardware</li>
+        <li>Use keyboard, joystick, or your own custom controllers via launch files</li>
+      </ul>
+
+      <div class="info-box">
+        <strong>Getting started?</strong> Head to the <strong>Installation</strong> section in the sidebar to set up ROS2 Foxy and the Pluto ROS2 package on your Ubuntu machine.
+      </div>
+
+      <h2>Contact &amp; Community</h2>
+      <p>Drona Aviation actively maintains the Pluto ROS2 package on GitHub. For issues, contributions, or questions, visit the official repository: <a href="https://github.com/DronaAviation/pluto_ros2_package" target="_blank">github.com/DronaAviation/pluto_ros2_package</a>.</p>
+      <p>You can also explore the full ROS wiki page for Pluto at <a href="http://wiki.ros.org/pluto_drone" target="_blank">wiki.ros.org/pluto_drone</a> for additional tutorials and keyboard command references.</p>
+    </div>
+
+    <!-- PAGE: INSTALLATION -->
+    <div class="page" id="page-installation">
+      <div class="page-header-bar">
+        <h1>Installation</h1>
+        <p>Set up ROS2 and the Pluto drone package on your system</p>
+      </div>
+
+      <div class="warn-box">
+        <strong>Caution:</strong> Please pay close attention to the version of software you're using. The dependencies change heavily between distributions.
+      </div>
+
+      <h2>Prerequisites</h2>
+      <ul>
+        <li>Ubuntu 20.04 or a greater version</li>
+        <li>Internet connection for downloading packages</li>
+        <li>A Pluto drone (without camera module) and a laptop connected to the same Wi-Fi</li>
+      </ul>
+
+      <!-- Step 1 -->
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Install ROS2 Foxy &amp; Setup the Environment</div>
+        <p>Follow the official ROS2 Foxy installation guide for Ubuntu. Use the <strong>Development Setup</strong> path for best compatibility:</p>
+        <p><a href="https://docs.ros.org/en/foxy/Installation/Alternatives/Ubuntu-Development-Setup.html" target="_blank">https://docs.ros.org/en/foxy/Installation/Alternatives/Ubuntu-Development-Setup.html</a></p>
+        <div class="info-box">Install Ubuntu 20.04 or greater before this step.</div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Create a New Workspace Directory</div>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">mkdir</span> <span class="sh-arg">-p ~/ros2_ws/src</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">cd</span> <span class="sh-arg">~/ros2_ws/src</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Install Git</div>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-kw">sudo</span> <span class="sh-bin">apt-get</span> <span class="sh-bin">install</span> <span class="sh-arg">git</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">4</span> Install the Pluto ROS2 Package</div>
+        <p>Navigate to the <code>src</code> folder of your workspace:</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="sh-cmt"># Navigate to src folder</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">cd</span> <span class="sh-arg">~/ros2_ws/src</span><br><br>
+            <span class="sh-cmt"># Clone the Pluto ROS2 package</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">git</span> <span class="sh-bin">clone</span> <span class="sh-arg">https://github.com/DronaAviation/pluto-ros2-package</span><br><br>
+            <span class="sh-cmt"># Build the package</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">colcon</span> <span class="sh-bin">build</span><br><br>
+            <span class="sh-cmt"># Source workspace into bashrc</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">echo</span> <span class="sh-str">"source ~/ros2_ws/install/setup.bash"</span> <span class="sh-bin">>></span> <span class="sh-arg">~/.bashrc</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">5</span> Test Run the Pluto Package</div>
+        <p>Open <strong>three separate terminals</strong>. Make sure ROS2 is sourced in every terminal, and that your Pluto Drone (without the camera) is powered on and your laptop is connected to its Wi-Fi network.</p>
+
+        <h3>Terminal 1 — Start the Pluto Node</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">Terminal 1</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-bin">run</span> <span class="sh-arg">plutodrone plutonode</span><br>
+            <span class="success">Pluto Connected</span>
+          </div>
+        </div>
+
+        <h3>Terminal 2 — Start the Pluto Service Node</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">Terminal 2</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-bin">run</span> <span class="sh-arg">plutoserver plutoserver</span>
+          </div>
+        </div>
+
+        <h3>Terminal 3 — Launch Keyboard Control</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">Terminal 3</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-bin">launch</span> <span class="sh-arg">plutoserver drone_comb.launch.py</span>
+          </div>
+        </div>
+
+        <div class="info-box">
+          For the full list of keyboard control commands, see <strong>Section 4.2</strong> of the <a href="http://wiki.ros.org/pluto_drone#Keyboard" target="_blank">ROS wiki tutorial</a>.
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: SETUP -->
+    <div class="page" id="page-setup">
+      <div class="page-header-bar">
+        <h1>Setup</h1>
+        <p>Configure the Pluto dashboard environment after installation</p>
+      </div>
+
+      <h2>Environment Configuration</h2>
+      <p>After completing the Installation steps, use the following setup guide to configure your environment for the Pluto ROS2 dashboard and development workflow.</p>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Verify ROS2 Environment</div>
+        <p>Open a terminal and confirm ROS2 is correctly sourced:</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">echo</span> <span class="sh-arg">$ROS_DISTRO</span><br>
+            <span class="success">foxy</span><br><br>
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-arg">--version</span><br>
+            <span class="success">ros2cli 0.9.x</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Source the Workspace on Every Shell</div>
+        <p>If you haven't already added the source command to your <code>.bashrc</code>, do it now so every new terminal is ready:</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">source</span> <span class="sh-arg">~/.bashrc</span><br>
+            <span class="sh-cmt"># Or add permanently:</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">echo</span> <span class="sh-str">"source ~/ros2_ws/install/setup.bash"</span> <span class="sh-bin">>></span> <span class="sh-arg">~/.bashrc</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Wi-Fi Connection to Pluto Drone</div>
+        <p>Power on your Pluto drone and connect your laptop to the drone's Wi-Fi hotspot. Verify connectivity by pinging the drone's default IP:</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ping</span> <span class="sh-arg">192.168.4.1</span><br>
+            <span class="success">64 bytes from 192.168.4.1: icmp_seq=1 ttl=64 time=1.2 ms</span>
+          </div>
+        </div>
+        <div class="info-box">The Pluto drone acts as a Wi-Fi access point. Make sure no other Wi-Fi network is interfering.</div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">4</span> Rebuild after Any Changes</div>
+        <p>Whenever you modify source files in the package, rebuild from the workspace root:</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">cd</span> <span class="sh-arg">~/ros2_ws</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">colcon</span> <span class="sh-bin">build</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">source</span> <span class="sh-arg">install/setup.bash</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">5</span> Confirm Package is Listed</div>
+        <p>Verify the Pluto package is visible to ROS2:</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-bin">pkg</span> <span class="sh-bin">list</span> <span class="sh-bin">|</span> <span class="sh-bin">grep</span> <span class="sh-arg">pluto</span><br>
+            <span class="success">plutodrone</span><br>
+            <span class="success">plutoserver</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-box">
+        If the packages are not listed, re-run <code>source ~/ros2_ws/install/setup.bash</code> and try again. Make sure <code>colcon build</code> completed without errors.
+      </div>
+
+      <h2>Teleop &amp; Starting Commands</h2>
+      <p>Follow these steps to connect your Pluto drone to the PC server using ROS and initiate teleoperation.</p>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">6</span> Start Pluto Server</div>
+        <p>Connect the drone to the server.</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-bin">run</span> <span class="sh-arg">plutoserver plutoserver</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">7</span> Start Teleop</div>
+        <p>Launch the keyboard teleoperation node to control the drone manually.</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-bin">run</span> <span class="sh-arg">plutodrone pluto_teleop</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Next Steps</h2>
+      <p>Once setup is complete, head over to the <strong>Installation</strong> page to run the test flight and verify everything works end-to-end with your Pluto drone.</p>
+    </div>
+
+    <!-- PAGE: DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header-bar">
+        <h1>Dashboard</h1>
+        <p>Connect Pluto commands to the dashboard interface for advanced monitoring and control</p>
+      </div>
+
+      <h2>Dashboard Integration</h2>
+      <p>Use the following commands to link the Pluto drone with your visual dashboard.</p>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Launch Dashboard Node</div>
+        <p>Start the ROS node responsible for the dashboard interface.</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-bin">run</span> <span class="sh-arg">pluto_dashboard dashboard_node</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>ArUco Marker Establishment</h2>
+      <p>For complex autonomous tasks, you can use ArUco markers for positioning, tracking, and precision landing.</p>
+      
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Place Markers</div>
+        <p>Print and place ArUco markers in your physical environment. Ensure they are flat and well-lit. Measure and note the exact physical dimensions of the printed markers (e.g., 5cm x 5cm) as this is crucial for accurate distance estimation.</p>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Start Camera Node</div>
+        <p>Enable the drone's camera stream to detect the markers.</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-bin">run</span> <span class="sh-arg">pluto_camera camera_node</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Start Tracking Node</div>
+        <p>Launch the ArUco tracking script to estimate pose and execute autonomous instructions.</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">ros2</span> <span class="sh-bin">run</span> <span class="sh-arg">pluto_vision aruco_tracker</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: SIMULATE -->
+    <div class="page" id="page-simulate">
+      <div class="page-header-bar">
+        <h1>Simulate</h1>
+        <p>Run the 2D Control Simulation for Pluto</p>
+      </div>
+
+      <h2>Running the Pluto Sim Window</h2>
+      <p>Before flying the real drone, you can test the path following capabilities and control parameters using the built-in 2D simulation window.</p>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Run in PowerShell (Windows)</div>
+        <p>If you are developing on Windows, open your PowerShell terminal, navigate to the project directory, and execute the python script.</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">powershell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">PS> </span><span class="sh-bin">cd</span> <span class="sh-arg">C:\path\to\Drona_aviation</span><br>
+            <span class="prompt">PS> </span><span class="sh-bin">python</span> <span class="sh-arg">sim_window.py</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Run in Ubuntu Terminal (Linux/ROS2 environment)</div>
+        <p>If you are running in your Ubuntu environment (like when using ROS2), open a standard bash terminal and execute the following commands:</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">cd</span> <span class="sh-arg">~/path/to/Drona_aviation</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">python3</span> <span class="sh-arg">sim_window.py</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: LAUNCH -->
+    <div class="page" id="page-launch">
+      <div class="page-header-bar">
+        <h1>Launch</h1>
+        <p>Start the Pluto dashboard across different operating systems</p>
+      </div>
+
+      <h2>Launch Instructions</h2>
+      <p>Follow the steps below to set up and launch the Pluto dashboard. Select your operating system for the appropriate commands.</p>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">1</span> Install RoboStack ROS 2 Humble</div>
+        <p>One-time setup: install RoboStack ROS 2 Humble into a conda env called "ros2".</p>
+        
+        <h3>macOS / Ubuntu Bash</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">./bootstrap_ros.sh</span>
+          </div>
+        </div>
+
+        <h3>PowerShell</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">powershell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">PS> </span><span class="sh-bin">.\bootstrap_ros.ps1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">2</span> Clone the Repositories</div>
+        <p>Clone the main fork and the camera fork side-by-side.</p>
+        
+        <h3>macOS / Ubuntu Bash</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">mkdir</span> <span class="sh-arg">-p ~/pluto</span> <span class="sh-bin">&&</span> <span class="sh-bin">cd</span> <span class="sh-arg">~/pluto</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">git</span> <span class="sh-bin">clone</span> <span class="sh-arg">-b dashboard-integration https://github.com/techsavvyomi/pluto_ros2_package.git</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">cd</span> <span class="sh-arg">pluto_ros2_package</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">git</span> <span class="sh-bin">clone</span> <span class="sh-arg">-b fix-1080p-framebuffer https://github.com/techsavvyomi/pluto_cam_ros2.git pluto_ros2_package/pluto_cam_ros2</span>
+          </div>
+        </div>
+
+        <h3>PowerShell</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">powershell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">PS> </span><span class="sh-bin">mkdir</span> <span class="sh-arg">~/pluto</span><span class="sh-bin">;</span> <span class="sh-bin">cd</span> <span class="sh-arg">~/pluto</span><br>
+            <span class="prompt">PS> </span><span class="sh-bin">git</span> <span class="sh-bin">clone</span> <span class="sh-arg">-b dashboard-integration https://github.com/techsavvyomi/pluto_ros2_package.git</span><br>
+            <span class="prompt">PS> </span><span class="sh-bin">cd</span> <span class="sh-arg">pluto_ros2_package</span><br>
+            <span class="prompt">PS> </span><span class="sh-bin">git</span> <span class="sh-bin">clone</span> <span class="sh-arg">-b fix-1080p-framebuffer https://github.com/techsavvyomi/pluto_cam_ros2.git pluto_ros2_package/pluto_cam_ros2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">3</span> Install Camera Dependencies</div>
+        <p>Install camera dependencies inside the conda environment.</p>
+        
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash / powershell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">conda</span> <span class="sh-arg">activate ros2</span><br>
+            <span class="prompt">$ </span><span class="sh-bin">mamba</span> <span class="sh-bin">install</span> <span class="sh-arg">-y -c conda-forge -c robostack-staging ros-humble-cv-bridge ros-humble-image-transport opencv av</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">4</span> Build the Workspace</div>
+        
+        <h3>macOS / Ubuntu Bash</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">./build.sh</span>
+          </div>
+        </div>
+
+        <h3>PowerShell</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">powershell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">PS> </span><span class="sh-bin">.\build.ps1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header"><span class="step-num">5</span> Launch the Dashboard</div>
+        <p>Launch just the dashboard — the only terminal you need.</p>
+        
+        <h3>macOS / Ubuntu Bash</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">$ </span><span class="sh-bin">./start_dashboard.sh</span>
+          </div>
+        </div>
+
+        <h3>PowerShell</h3>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="t-dot t-red"></div><div class="t-dot t-yellow"></div><div class="t-dot t-green"></div>
+            <span class="terminal-label">powershell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="terminal-body">
+            <span class="prompt">PS> </span><span class="sh-bin">.\start_dashboard.ps1</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /content-area -->
+</div><!-- /layout -->
+
+<script>
+  function copyCode(btn) {
+    const terminal = btn.closest('.terminal');
+    const body = terminal.querySelector('.terminal-body');
+    const clone = body.cloneNode(true);
+    
+    // Remove prompts and outputs (if any are explicitly marked)
+    clone.querySelectorAll('.prompt, .output').forEach(el => el.remove());
+    
+    // Get text, handle <br> and other elements
+    const text = clone.innerText.trim();
+    
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerText = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { 
+        btn.innerText = 'Copy'; 
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+  }
+
+  function showPage(pageId, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + pageId).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function filterNav(query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+  }
+</script>
+</body>
+</html>

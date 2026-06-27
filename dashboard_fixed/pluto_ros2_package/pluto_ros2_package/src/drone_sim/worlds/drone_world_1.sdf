@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <world name="drone_world">
+
+    <physics name="default_physics" default="0" type="ode">
+      <gravity>0 0 -9.8</gravity>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster"/>
+
+    <!-- Sun -->
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 100 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- Ground plane -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ArUco wall (2m in front) -->
+    <model name="aruco_wall">
+      <static>true</static>
+      <pose>2 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.02 1.0 1.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.02 1.0 1.0</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ── QUADROTOR DRONE ─────────────────────────────────────── -->
+    <model name="quadrotor">
+      <pose>0 0 0.3 0 0 0</pose>
+
+      <!-- Velocity control plugin -->
+      <plugin filename="gz-sim-velocity-control-system"
+              name="gz::sim::systems::VelocityControl">
+        <topic>/cmd_vel</topic>
+      </plugin>
+
+      <!-- Body -->
+      <link name="base_link">
+        <inertial>
+          <mass>1.5</mass>
+          <inertia>
+            <ixx>0.0347</ixx><ixy>0</ixy><ixz>0</ixz>
+            <iyy>0.0458</iyy><iyz>0</iyz>
+            <izz>0.0977</izz>
+          </inertia>
+        </inertial>
+        <visual name="body_visual">
+          <geometry><cylinder><radius>0.15</radius><length>0.06</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material>
+        </visual>
+        <collision name="body_col">
+          <geometry><cylinder><radius>0.15</radius><length>0.06</length></cylinder></geometry>
+        </collision>
+
+        <!-- Front-Left motor -->
+        <visual name="fl_motor">
+          <pose>0.155 0.155 0.025 0 0 0</pose>
+          <geometry><cylinder><radius>0.02</radius><length>0.025</length></cylinder></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient></material>
+        </visual>
+        <!-- Front-Right motor -->
+        <visual name="fr_motor">
+          <pose>0.155 -0.155 0.025 0 0 0</pose>
+          <geometry><cylinder><radius>0.02</radius><length>0.025</length></cylinder></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient></material>
+        </visual>
+        <!-- Rear-Left motor -->
+        <visual name="rl_motor">
+          <pose>-0.155 0.155 0.025 0 0 0</pose>
+          <geometry><cylinder><radius>0.02</radius><length>0.025</length></cylinder></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient></material>
+        </visual>
+        <!-- Rear-Right motor -->
+        <visual name="rr_motor">
+          <pose>-0.155 -0.155 0.025 0 0 0</pose>
+          <geometry><cylinder><radius>0.02</radius><length>0.025</length></cylinder></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient></material>
+        </visual>
+
+        <!-- Props (flat discs) -->
+        <visual name="fl_prop">
+          <pose>0.155 0.155 0.04 0 0 0</pose>
+          <geometry><cylinder><radius>0.12</radius><length>0.005</length></cylinder></geometry>
+          <material><ambient>0.1 0.8 0.1 0.8</ambient><diffuse>0.1 0.8 0.1 0.8</diffuse></material>
+        </visual>
+        <visual name="fr_prop">
+          <pose>0.155 -0.155 0.04 0 0 0</pose>
+          <geometry><cylinder><radius>0.12</radius><length>0.005</length></cylinder></geometry>
+          <material><ambient>0.1 0.8 0.1 0.8</ambient><diffuse>0.1 0.8 0.1 0.8</diffuse></material>
+        </visual>
+        <visual name="rl_prop">
+          <pose>-0.155 0.155 0.04 0 0 0</pose>
+          <geometry><cylinder><radius>0.12</radius><length>0.005</length></cylinder></geometry>
+          <material><ambient>0.1 0.8 0.1 0.8</ambient><diffuse>0.1 0.8 0.1 0.8</diffuse></material>
+        </visual>
+        <visual name="rr_prop">
+          <pose>-0.155 -0.155 0.04 0 0 0</pose>
+          <geometry><cylinder><radius>0.12</radius><length>0.005</length></cylinder></geometry>
+          <material><ambient>0.1 0.8 0.1 0.8</ambient><diffuse>0.1 0.8 0.1 0.8</diffuse></material>
+        </visual>
+
+        <!-- Front camera (red box) -->
+        <visual name="camera_visual">
+          <pose>0.16 0 0 0 0 0</pose>
+          <geometry><box><size>0.02 0.02 0.02</size></box></geometry>
+          <material><ambient>0.8 0.1 0.1 1</ambient><diffuse>0.8 0.1 0.1 1</diffuse></material>
+        </visual>
+
+        <!-- Camera sensor -->
+        <sensor name="front_camera" type="camera">
+          <pose>0.16 0 0 0 0 0</pose>
+          <always_on>true</always_on>
+          <update_rate>30</update_rate>
+          <camera>
+            <horizontal_fov>1.5708</horizontal_fov>
+            <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+            <clip><near>0.05</near><far>50</far></clip>
+          </camera>
+          <topic>/camera/image</topic>
+        </sensor>
+
+      </link>
+    </model>
+
+  </world>
+</sdf>

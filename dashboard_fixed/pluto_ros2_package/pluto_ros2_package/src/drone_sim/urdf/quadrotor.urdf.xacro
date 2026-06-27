@@ -1,0 +1,206 @@
+<?xml version="1.0"?>
+<robot name="quadrotor" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ── Properties ───────────────────────────────────────────── -->
+  <xacro:property name="body_mass"   value="1.5"/>
+  <xacro:property name="body_radius" value="0.15"/>
+  <xacro:property name="body_height" value="0.06"/>
+  <xacro:property name="arm_length"  value="0.22"/>
+  <xacro:property name="prop_radius" value="0.12"/>
+
+  <!-- ── Base link (body) ─────────────────────────────────────── -->
+  <link name="base_link">
+    <inertial>
+      <mass value="${body_mass}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.0347563" ixy="0" ixz="0"
+               iyy="0.0458929" iyz="0"
+               izz="0.0977"  />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${body_radius}" length="${body_height}"/>
+      </geometry>
+      <material name="dark_grey">
+        <color rgba="0.2 0.2 0.2 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${body_radius}" length="${body_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ── Macro: one arm + motor + prop ───────────────────────── -->
+  <xacro:macro name="arm" params="name x y z spin_dir">
+
+    <!-- arm visual -->
+    <link name="${name}_arm">
+      <visual>
+        <origin xyz="${x/2} ${y/2} 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${arm_length} 0.02 0.02"/>
+        </geometry>
+        <material name="grey">
+          <color rgba="0.5 0.5 0.5 1"/>
+        </material>
+      </visual>
+      <inertial>
+        <mass value="0.05"/>
+        <inertia ixx="0.0001" ixy="0" ixz="0"
+                 iyy="0.0001" iyz="0" izz="0.0001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_arm_joint" type="fixed">
+      <parent link="base_link"/>
+      <child  link="${name}_arm"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- motor -->
+    <link name="${name}_motor">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.02" length="0.025"/>
+        </geometry>
+        <material name="black">
+          <color rgba="0.1 0.1 0.1 1"/>
+        </material>
+      </visual>
+      <inertial>
+        <mass value="0.025"/>
+        <inertia ixx="0.00001" ixy="0" ixz="0"
+                 iyy="0.00001" iyz="0" izz="0.00001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_motor_joint" type="fixed">
+      <parent link="base_link"/>
+      <child  link="${name}_motor"/>
+      <origin xyz="${x} ${y} 0.025" rpy="0 0 0"/>
+    </joint>
+
+    <!-- propeller -->
+    <link name="${name}_prop">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${prop_radius}" length="0.005"/>
+        </geometry>
+        <material name="prop_color">
+          <color rgba="0.1 0.7 0.1 0.8"/>
+        </material>
+      </visual>
+      <inertial>
+        <mass value="0.01"/>
+        <inertia ixx="0.000025" ixy="0" ixz="0"
+                 iyy="0.000025" iyz="0" izz="0.00005"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_prop_joint" type="continuous">
+      <parent link="${name}_motor"/>
+      <child  link="${name}_prop"/>
+      <origin xyz="0 0 0.02" rpy="0 0 0"/>
+      <axis   xyz="0 0 ${spin_dir}"/>
+    </joint>
+
+  </xacro:macro>
+
+  <!-- ── Instantiate 4 arms (X config) ───────────────────────── -->
+  <!--  FL = front-left, FR = front-right, RL = rear-left, RR = rear-right  -->
+  <xacro:arm name="fl" x=" 0.155"  y=" 0.155"  z="0" spin_dir=" 1"/>
+  <xacro:arm name="fr" x=" 0.155"  y="-0.155"  z="0" spin_dir="-1"/>
+  <xacro:arm name="rl" x="-0.155"  y=" 0.155"  z="0" spin_dir="-1"/>
+  <xacro:arm name="rr" x="-0.155"  y="-0.155"  z="0" spin_dir=" 1"/>
+
+  <!-- ── IMU link ─────────────────────────────────────────────── -->
+  <link name="imu_link">
+    <inertial>
+      <mass value="0.001"/>
+      <inertia ixx="0.000001" ixy="0" ixz="0"
+               iyy="0.000001" iyz="0" izz="0.000001"/>
+    </inertial>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="imu_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── Camera link (front-facing) ──────────────────────────── -->
+  <link name="camera_link">
+    <visual>
+      <geometry><box size="0.02 0.02 0.02"/></geometry>
+      <material name="red"><color rgba="0.8 0.1 0.1 1"/></material>
+    </visual>
+    <inertial>
+      <mass value="0.01"/>
+      <inertia ixx="0.000001" ixy="0" ixz="0"
+               iyy="0.000001" iyz="0" izz="0.000001"/>
+    </inertial>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="camera_link"/>
+    <origin xyz="0.16 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── Gazebo plugins ───────────────────────────────────────── -->
+
+  <!-- IMU plugin -->
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+        <ros>
+          <remapping>~/out:=/imu</remapping>
+        </ros>
+        <initial_orientation_as_reference>false</initial_orientation_as_reference>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- Camera plugin (front) -->
+  <gazebo reference="camera_link">
+    <sensor name="front_camera" type="camera">
+      <always_on>true</always_on>
+      <update_rate>30</update_rate>
+      <camera>
+        <horizontal_fov>1.5708</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>50</far>
+        </clip>
+      </camera>
+      <plugin name="camera_plugin" filename="libgazebo_ros_camera.so">
+        <ros>
+          <remapping>image_raw:=/camera/image</remapping>
+        </ros>
+        <camera_name>front_camera</camera_name>
+        <frame_name>camera_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- Quadrotor physics plugin (lift + drag) -->
+  <gazebo>
+    <plugin name="gazebo_ros_quadrotor" filename="libgazebo_ros_planar_move.so">
+      <ros>
+        <remapping>cmd_vel:=/cmd_vel</remapping>
+      </ros>
+    </plugin>
+  </gazebo>
+
+</robot>
